@@ -183,79 +183,120 @@
             padding: 2rem 1rem;
         }
 
-        .upload-zone {
+        /* ===== SOLUTION 1: INPUT VISIBLE ===== */
+        .upload-simple {
+            background: rgba(255,255,255,0.03);
             border: 2px dashed rgba(123,47,247,0.5);
             border-radius: 20px;
-            padding: 3rem 2rem;
+            padding: 2rem;
             text-align: center;
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(20px);
-            cursor: pointer;
-            transition: all 0.4s;
             margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
+            backdrop-filter: blur(20px);
         }
 
-        .upload-zone::before {
-            content: '';
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, var(--violet-neon), var(--cyan-neon), var(--rose-neon), var(--violet-neon));
-            background-size: 400% 400%;
-            border-radius: 22px;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.4s;
-            animation: borderRotate 3s linear infinite;
-        }
-
-        @keyframes borderRotate {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .upload-zone:hover::before {
-            opacity: 1;
-        }
-
-        .upload-zone:hover {
-            background: rgba(255,255,255,0.06);
-            transform: translateY(-5px);
-            box-shadow: 0 20px 60px rgba(123,47,247,0.2);
-        }
-
-        .upload-zone.dragover {
-            background: rgba(123,47,247,0.1);
-            border-color: var(--cyan-neon);
-        }
-
-        .upload-zone .icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: iconBounce 2s ease-in-out infinite;
-        }
-
-        @keyframes iconBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .upload-zone h2 {
+        .upload-simple h2 {
             color: white;
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
+            margin-bottom: 1rem;
         }
 
-        .upload-zone p {
+        .upload-simple p {
             color: #8888aa;
+            margin-bottom: 1.5rem;
         }
 
-        .upload-btn {
+        .file-input-wrapper {
+            position: relative;
             display: inline-block;
-            margin-top: 1.5rem;
-            padding: 1rem 2.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--violet-neon), var(--cyan-neon));
+            color: white;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(123,47,247,0.3);
+            text-align: center;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(123,47,247,0.5);
+        }
+
+        .file-name {
+            margin-top: 1rem;
+            color: var(--cyan-neon);
+            font-size: 0.9rem;
+            min-height: 20px;
+        }
+
+        /* ===== SOLUTION 2: TEXTE COPIE-COLLE ===== */
+        .paste-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(123,47,247,0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .paste-section h2 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .paste-section p {
+            color: #8888aa;
+            margin-bottom: 1rem;
+        }
+
+        .paste-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(123,47,247,0.3);
+            border-radius: 12px;
+            color: #d0d0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+
+        .paste-textarea:focus {
+            outline: none;
+            border-color: var(--cyan-neon);
+            box-shadow: 0 0 20px rgba(0,229,255,0.2);
+        }
+
+        .paste-textarea::placeholder {
+            color: #666;
+        }
+
+        .analyze-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 1.5rem auto 0;
+            padding: 1rem 2rem;
             background: linear-gradient(135deg, var(--violet-neon), var(--cyan-neon));
             color: white;
             border: none;
@@ -265,17 +306,33 @@
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 10px 30px rgba(123,47,247,0.3);
-            position: relative;
-            z-index: 10;
-            pointer-events: auto;
         }
 
-        .upload-btn:hover {
+        .analyze-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 15px 40px rgba(123,47,247,0.5);
         }
 
-        #fileInput { display: none; }
+        .or-divider {
+            text-align: center;
+            color: #8888aa;
+            margin: 1.5rem 0;
+            font-size: 1.2rem;
+            position: relative;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: rgba(123,47,247,0.3);
+        }
+
+        .or-divider::before { left: 0; }
+        .or-divider::after { right: 0; }
 
         .zone-selector {
             margin: 1rem 0;
@@ -662,23 +719,12 @@
             display: block;
         }
 
-        .debug-info {
-            background: rgba(0,229,255,0.1);
-            border: 1px solid rgba(0,229,255,0.3);
-            color: #00e5ff;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
         @media (max-width: 600px) {
             .main-title { font-size: 2.5rem; }
             .main-title::after { right: -30px; font-size: 0.7rem; }
             .score-card { flex-direction: column; text-align: center; }
             .header { padding: 2rem 1rem 3rem; }
-            .upload-zone { padding: 2rem 1rem; }
+            .upload-simple { padding: 1.5rem 1rem; }
             .letter-content { padding: 1.5rem; }
         }
     </style>
@@ -699,16 +745,34 @@
 
     <div class="container">
         <div class="error-message" id="errorMessage"></div>
-        <div class="debug-info" id="debugInfo" style="display:none;"></div>
 
-        <div class="upload-zone" id="uploadZone">
-            <div class="icon">📄</div>
-            <h2>Deposez votre bail ici</h2>
-            <p>PDF, JPG ou PNG - Glissez ou cliquez ci-dessous</p>
-            <button class="upload-btn" id="uploadBtn" type="button">
-                📁 Choisir un fichier
-            </button>
-            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+        <!-- SOLUTION 1: Upload de fichier simple -->
+        <div class="upload-simple">
+            <h2>📁 Methode 1: Selectionner un fichier</h2>
+            <p>Cliquez sur le bouton ci-dessous pour choisir votre bail (PDF, JPG, PNG)</p>
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+                <label for="fileInput" class="file-input-label">📄 Choisir un fichier</label>
+            </div>
+            <div class="file-name" id="fileName"></div>
+        </div>
+
+        <div class="or-divider">OU</div>
+
+        <!-- SOLUTION 2: Copier-coller le texte -->
+        <div class="paste-section">
+            <h2>📋 Methode 2: Copier le texte du bail</h2>
+            <p>Ouvrez votre bail PDF, selectionnez tout le texte (Ctrl+A), copiez (Ctrl+C), et collez ici :</p>
+            <textarea class="paste-textarea" id="pasteTextarea" placeholder="Collez le texte de votre bail ici...
+
+Exemple:
+BAIL D'HABITATION NON MEUBLE
+Adresse: 12 rue de la Paix, 75000 Paris
+Loyer: 850€
+Charges: 100€
+Depot de garantie: 850€
+..."></textarea>
+            <button class="analyze-btn" id="analyzeBtn">🔍 Analyser le texte</button>
         </div>
 
         <div class="zone-selector" id="zoneSelector">
@@ -764,7 +828,7 @@
     </div>
 
     <script>
-        // ===== CREER LES PARTICULES =====
+        // ===== PARTICULES =====
         function createParticles() {
             const container = document.getElementById('particles');
             for (let i = 0; i < 30; i++) {
@@ -781,117 +845,50 @@
         }
         createParticles();
 
-        // ===== CONFIGURATION PDF.JS =====
+        // ===== CONFIG PDF.JS =====
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // ===== REFERENCES DOM =====
-        const uploadZone = document.getElementById('uploadZone');
+        // ===== REFERENCES =====
         const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
+        const fileName = document.getElementById('fileName');
+        const pasteTextarea = document.getElementById('pasteTextarea');
+        const analyzeBtn = document.getElementById('analyzeBtn');
         const loading = document.getElementById('loading');
         const results = document.getElementById('results');
         const zoneSelector = document.getElementById('zoneSelector');
         const zoneType = document.getElementById('zoneType');
         const errorMessage = document.getElementById('errorMessage');
-        const debugInfo = document.getElementById('debugInfo');
 
         let extractedText = '';
         let detectedIssues = [];
 
-        // ===== FONCTIONS UTILITAIRES =====
         function showError(msg) {
             errorMessage.textContent = msg;
             errorMessage.classList.add('active');
             setTimeout(function() { errorMessage.classList.remove('active'); }, 6000);
         }
 
-        function showDebug(msg) {
-            debugInfo.textContent = msg;
-            debugInfo.style.display = 'block';
-        }
-
-        // ===== BOUTON UPLOAD =====
-        // Le bouton a son propre event listener - NE PAS propager au parent
-        uploadBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('=== BOUTON CLIQUE ===');
-            fileInput.click();
-            return false;
-        });
-
-        // ===== FILE INPUT CHANGE =====
+        // ===== METHODE 1: FILE INPUT =====
         fileInput.addEventListener('change', function(e) {
-            console.log('=== FILE INPUT CHANGE ===', e.target.files);
+            console.log('File input change:', e.target.files);
             if (e.target.files && e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
+                const file = e.target.files[0];
+                fileName.textContent = 'Fichier selectionne: ' + file.name;
+                handleFile(file);
             }
         });
 
-        // ===== CLIC SUR LA ZONE (mais pas sur le bouton) =====
-        uploadZone.addEventListener('click', function(e) {
-            // Si on a clique sur le bouton ou ses enfants, ne rien faire (deja gere par le bouton)
-            if (e.target === uploadBtn || uploadBtn.contains(e.target)) {
+        // ===== METHODE 2: TEXTE COPIE-COLLE =====
+        analyzeBtn.addEventListener('click', function() {
+            const text = pasteTextarea.value.trim();
+            if (!text) {
+                showError('Veuillez coller le texte de votre bail avant d'analyser.');
                 return;
             }
-            console.log('=== ZONE CLIQUEE (hors bouton) ===');
-            fileInput.click();
-        });
-
-        // ===== DRAG & DROP - ULTRA ROBUSTE =====
-        // On attache les events sur le document ENTIER pour capturer tout drag
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
-            document.body.addEventListener(eventName, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-
-        // Quand on entre dans la zone
-        uploadZone.addEventListener('dragenter', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            uploadZone.classList.add('dragover');
-            console.log('=== DRAG ENTER ===');
-        });
-
-        // Quand on survole
-        uploadZone.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.dataTransfer.dropEffect = 'copy';
-            uploadZone.classList.add('dragover');
-        });
-
-        // Quand on quitte
-        uploadZone.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Ne retirer que si on quitte vraiment la zone (pas un enfant)
-            if (!uploadZone.contains(e.relatedTarget)) {
-                uploadZone.classList.remove('dragover');
-            }
-        });
-
-        // Quand on depose
-        uploadZone.addEventListener('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            uploadZone.classList.remove('dragover');
-
-            console.log('=== DROP ===');
-            console.log('DataTransfer:', e.dataTransfer);
-            console.log('Files:', e.dataTransfer.files);
-            console.log('Types:', e.dataTransfer.types);
-
-            const files = e.dataTransfer.files;
-            if (files && files.length > 0) {
-                console.log('Fichier droppe:', files[0].name, 'type:', files[0].type);
-                handleFile(files[0]);
-            } else {
-                showError('Aucun fichier detecte. Essayez avec le bouton "Choisir un fichier".');
-            }
+            console.log('Analyse texte colle, longueur:', text.length);
+            extractedText = text;
+            zoneSelector.style.display = 'block';
+            analyzeBail(extractedText);
         });
 
         // ===== ZONE SELECTOR =====
@@ -899,20 +896,16 @@
             if (extractedText) analyzeBail(extractedText);
         });
 
-        // ===== TRAITEMENT DU FICHIER =====
+        // ===== TRAITEMENT FICHIER =====
         async function handleFile(file) {
-            console.log('=== TRAITEMENT FICHIER ===');
-            console.log('Nom:', file.name);
-            console.log('Type:', file.type);
-            console.log('Taille:', file.size);
+            console.log('Traitement:', file.name, 'type:', file.type, 'taille:', file.size);
 
-            // Verification du type de fichier
-            const fileName = file.name.toLowerCase();
-            const isPDF = file.type === 'application/pdf' || fileName.endsWith('.pdf');
-            const isImage = file.type.startsWith('image/') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png');
+            const fileNameLower = file.name.toLowerCase();
+            const isPDF = file.type === 'application/pdf' || fileNameLower.endsWith('.pdf');
+            const isImage = file.type.startsWith('image/') || fileNameLower.endsWith('.jpg') || fileNameLower.endsWith('.jpeg') || fileNameLower.endsWith('.png');
 
             if (!isPDF && !isImage) {
-                showError('Format non supporte : ' + file.name + '. Utilisez PDF, JPG ou PNG.');
+                showError('Format non supporte: ' + file.name + '. Utilisez PDF, JPG ou PNG.');
                 return;
             }
 
@@ -931,7 +924,7 @@
                 }
 
                 if (!text || text.trim().length === 0) {
-                    throw new Error('Aucun texte extrait du fichier. Essayez avec un PDF texte ou une photo plus nette.');
+                    throw new Error('Aucun texte extrait. Essayez la Methode 2 (copier-coller) ou une photo plus nette.');
                 }
 
                 extractedText = text;
@@ -940,7 +933,7 @@
 
             } catch (err) {
                 console.error('Erreur:', err);
-                showError(err.message || 'Erreur lors de l analyse');
+                showError(err.message || 'Erreur lors de l'analyse');
                 loading.classList.remove('active');
             }
         }
@@ -1435,11 +1428,11 @@ Je vous prie d'agreer, Madame, Monsieur, l'expression de mes salutations disting
             if (e.target.id === 'letterModal') closeModal();
         });
 
-        // ===== LOG DE DEMARRAGE =====
-        console.log('=== BAIL CHECK v2.1 CHARGE ===');
-        console.log('Upload zone:', !!uploadZone);
+        // ===== LOG =====
+        console.log('=== BAIL CHECK v3.0 CHARGE ===');
         console.log('File input:', !!fileInput);
-        console.log('Upload btn:', !!uploadBtn);
+        console.log('Paste textarea:', !!pasteTextarea);
+        console.log('Analyze btn:', !!analyzeBtn);
     </script>
 </body>
 </html>
