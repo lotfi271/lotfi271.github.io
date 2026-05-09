@@ -3,1319 +3,934 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bail Check - Analyse ton bail gratuitement</title>
+    <title>Bail Check - Analyse ton bail</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --bleu-france: #000091;
-            --rouge-france: #E1000F;
-            --vert-ok: #18753C;
-            --orange-warning: #B34000;
-            --gris-fond: #F6F6F6;
-            --gris-texte: #3A3A3A;
-            --violet-neon: #7B2FF7;
-            --cyan-neon: #00E5FF;
-            --rose-neon: #FF006E;
-        }
-
         body {
-            font-family: 'Marianne', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d0d2b 100%);
-            color: var(--gris-texte);
+            color: white;
             line-height: 1.6;
             min-height: 100vh;
         }
 
-        /* ===== HEADER ANIMÉ 2026 ===== */
         .header {
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a3e 50%, #0d0d2b 100%);
-            color: white;
-            padding: 3rem 1rem 4rem;
             text-align: center;
-            position: relative;
-            overflow: hidden;
+            padding: 2rem 1rem;
         }
 
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(123,47,247,0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(0,229,255,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(255,0,110,0.08) 0%, transparent 60%);
-            animation: headerGlow 8s ease-in-out infinite alternate;
-        }
-
-        @keyframes headerGlow {
-            0% { transform: rotate(0deg) scale(1); }
-            100% { transform: rotate(180deg) scale(1.2); }
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        /* Logo animé */
-        .logo-container {
-            display: inline-flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .logo-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--violet-neon), var(--cyan-neon));
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            animation: logoPulse 3s ease-in-out infinite;
-            box-shadow: 0 0 30px rgba(123,47,247,0.5), 0 0 60px rgba(0,229,255,0.3);
-        }
-
-        @keyframes logoPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(123,47,247,0.5); }
-            50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(123,47,247,0.8), 0 0 80px rgba(0,229,255,0.4); }
-        }
-
-        /* Titre stylisé 2026 */
         .main-title {
-            font-size: 4rem;
+            font-size: 3rem;
             font-weight: 900;
-            letter-spacing: -2px;
-            position: relative;
-            display: inline-block;
-            background: linear-gradient(90deg, #fff 0%, var(--cyan-neon) 25%, var(--violet-neon) 50%, var(--rose-neon) 75%, #fff 100%);
+            background: linear-gradient(90deg, #fff, #00E5FF, #7B2FF7, #FF006E, #fff);
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: titleShine 4s linear infinite;
-            text-shadow: none;
-            filter: drop-shadow(0 0 20px rgba(123,47,247,0.5));
+            animation: shine 4s linear infinite;
         }
 
-        @keyframes titleShine {
+        @keyframes shine {
             0% { background-position: 0% center; }
             100% { background-position: 200% center; }
         }
 
-        .main-title::after {
-            content: '2026';
-            position: absolute;
-            top: -10px;
-            right: -50px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--rose-neon), var(--violet-neon));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 2px;
-            animation: yearFloat 2s ease-in-out infinite;
-        }
-
-        @keyframes yearFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
         .subtitle {
-            font-size: 1.3rem;
-            opacity: 0.85;
-            margin-top: 0.5rem;
-            color: #a0a0d0;
-            font-weight: 300;
-        }
-
-        .badge-free {
-            display: inline-block;
-            margin-top: 1.5rem;
-            padding: 0.5rem 1.5rem;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(0,229,255,0.3);
-            border-radius: 50px;
-            font-size: 0.9rem;
-            color: var(--cyan-neon);
-            backdrop-filter: blur(10px);
-            animation: badgeGlow 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes badgeGlow {
-            0% { box-shadow: 0 0 10px rgba(0,229,255,0.2); }
-            100% { box-shadow: 0 0 25px rgba(0,229,255,0.5), inset 0 0 10px rgba(0,229,255,0.1); }
-        }
-
-        /* Particules flottantes */
-        .particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: var(--cyan-neon);
-            border-radius: 50%;
-            opacity: 0.6;
-            animation: floatParticle linear infinite;
-        }
-
-        @keyframes floatParticle {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.6; }
-            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-        }
-
-        /* ===== CONTENU ===== */
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        /* ===== UPLOAD ZONE ===== */
-        .upload-zone {
-            border: 2px dashed rgba(123,47,247,0.5);
-            border-radius: 20px;
-            padding: 3rem 2rem;
-            text-align: center;
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(20px);
-            cursor: pointer;
-            transition: all 0.4s;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .upload-zone::before {
-            content: '';
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, var(--violet-neon), var(--cyan-neon), var(--rose-neon), var(--violet-neon));
-            background-size: 400% 400%;
-            border-radius: 22px;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.4s;
-            animation: borderRotate 3s linear infinite;
-        }
-
-        @keyframes borderRotate {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .upload-zone:hover::before {
-            opacity: 1;
-        }
-
-        .upload-zone:hover {
-            background: rgba(255,255,255,0.06);
-            transform: translateY(-5px);
-            box-shadow: 0 20px 60px rgba(123,47,247,0.2);
-        }
-
-        .upload-zone.dragover {
-            background: rgba(123,47,247,0.1);
-            border-color: var(--cyan-neon);
-        }
-
-        .upload-zone .icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: iconBounce 2s ease-in-out infinite;
-        }
-
-        @keyframes iconBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .upload-zone h2 {
-            color: white;
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
-        }
-
-        .upload-zone p {
             color: #8888aa;
+            margin-top: 0.5rem;
         }
 
-        .upload-btn {
-            display: inline-block;
-            margin-top: 1.5rem;
-            padding: 1rem 2.5rem;
-            background: linear-gradient(135deg, var(--violet-neon), var(--cyan-neon));
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .method-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(123,47,247,0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .method-box h2 {
+            margin-bottom: 1rem;
+            color: #00E5FF;
+        }
+
+        .method-box p {
+            color: #8888aa;
+            margin-bottom: 1rem;
+        }
+
+        /* INPUT FILE SIMPLE */
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border: 2px dashed #7B2FF7;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        input[type="file"]:hover {
+            border-color: #00E5FF;
+            background: rgba(0,229,255,0.1);
+        }
+
+        /* TEXTAREA */
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(123,47,247,0.3);
+            border-radius: 12px;
+            color: #d0d0e0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00E5FF;
+        }
+
+        /* BOUTON */
+        button {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+            background: linear-gradient(135deg, #7B2FF7, #00E5FF);
             color: white;
             border: none;
             border-radius: 50px;
             font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 10px 30px rgba(123,47,247,0.3);
         }
 
-        .upload-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(123,47,247,0.5);
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
         }
 
-        #fileInput { display: none; }
-
-        /* ===== ZONE SELECTOR ===== */
-        .zone-selector {
-            margin: 1rem 0;
-            padding: 1.5rem;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(123,47,247,0.2);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            display: none;
-        }
-
-        .zone-selector label {
-            display: block;
-            margin-bottom: 0.8rem;
-            font-weight: 600;
-            color: white;
-            font-size: 1.1rem;
-        }
-
-        .zone-selector select {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid rgba(123,47,247,0.3);
-            border-radius: 12px;
-            font-size: 1rem;
-            background: rgba(0,0,0,0.3);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .zone-selector select:focus {
-            outline: none;
-            border-color: var(--cyan-neon);
-            box-shadow: 0 0 20px rgba(0,229,255,0.2);
-        }
-
-        .zone-selector select option {
-            background: #1a1a3e;
-            color: white;
-        }
-
-        /* ===== LOADING ===== */
+        /* LOADING */
         .loading {
             display: none;
             text-align: center;
-            padding: 3rem;
-            background: rgba(255,255,255,0.03);
-            border-radius: 20px;
-            margin-bottom: 2rem;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(123,47,247,0.2);
+            padding: 2rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
         }
 
-        .loading.active { display: block; }
-
-        .spinner-container {
-            position: relative;
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
+        .loading.active {
+            display: block;
         }
 
         .spinner {
-            width: 80px;
-            height: 80px;
-            border: 4px solid rgba(123,47,247,0.2);
-            border-top-color: var(--cyan-neon);
-            border-right-color: var(--violet-neon);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .spinner-inner {
-            position: absolute;
-            top: 15px;
-            left: 15px;
             width: 50px;
             height: 50px;
-            border: 3px solid rgba(0,229,255,0.2);
-            border-top-color: var(--rose-neon);
+            border: 4px solid rgba(123,47,247,0.3);
+            border-top-color: #00E5FF;
             border-radius: 50%;
-            animation: spin 0.7s linear infinite reverse;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .loading h3 {
-            color: white;
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .loading p {
-            color: #8888aa;
-        }
-
-        /* ===== RÉSULTATS ===== */
+        /* RESULTS */
         .results {
             display: none;
-            background: rgba(255,255,255,0.03);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(123,47,247,0.2);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        .results.active { display: block; }
-
-        .score-card {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-            padding: 2rem;
+            background: rgba(255,255,255,0.05);
             border-radius: 16px;
-            margin-bottom: 2rem;
-            backdrop-filter: blur(10px);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
         }
 
-        .score-card.danger {
-            background: rgba(225,0,15,0.1);
-            border: 1px solid rgba(225,0,15,0.3);
+        .results.active {
+            display: block;
         }
 
-        .score-card.warning {
-            background: rgba(179,64,0,0.1);
-            border: 1px solid rgba(179,64,0,0.3);
+        .score {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
         }
 
-        .score-card.ok {
-            background: rgba(24,117,60,0.1);
-            border: 1px solid rgba(24,117,60,0.3);
+        .score.danger {
+            background: rgba(225,0,15,0.15);
+            border: 1px solid rgba(225,0,15,0.4);
+        }
+
+        .score.warning {
+            background: rgba(179,64,0,0.15);
+            border: 1px solid rgba(179,64,0,0.4);
+        }
+
+        .score.ok {
+            background: rgba(24,117,60,0.15);
+            border: 1px solid rgba(24,117,60,0.4);
         }
 
         .score-circle {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
-            font-weight: bold;
-            flex-shrink: 0;
-            animation: scoreAppear 0.5s ease-out;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
         }
 
-        @keyframes scoreAppear {
-            0% { transform: scale(0) rotate(-180deg); }
-            100% { transform: scale(1) rotate(0); }
+        .score.danger .score-circle { background: #e1000f; }
+        .score.warning .score-circle { background: #b34000; }
+        .score.ok .score-circle { background: #18753c; }
+
+        .issue {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
         }
 
-        .score-circle.danger { 
-            background: linear-gradient(135deg, #e1000f, #ff4444);
-            color: white;
-            box-shadow: 0 0 30px rgba(225,0,15,0.4);
-        }
-        .score-circle.warning { 
-            background: linear-gradient(135deg, #b34000, #ff8800);
-            color: white;
-            box-shadow: 0 0 30px rgba(179,64,0,0.4);
-        }
-        .score-circle.ok { 
-            background: linear-gradient(135deg, #18753c, #00c853);
-            color: white;
-            box-shadow: 0 0 30px rgba(24,117,60,0.4);
+        .issue.critical {
+            background: rgba(225,0,15,0.1);
+            border-left-color: #e1000f;
         }
 
-        .score-text h3 {
-            font-size: 1.5rem;
+        .issue.warning {
+            background: rgba(179,64,0,0.1);
+            border-left-color: #b34000;
+        }
+
+        .issue.info {
+            background: rgba(0,229,255,0.1);
+            border-left-color: #00E5FF;
+        }
+
+        .issue h4 {
             margin-bottom: 0.5rem;
             color: white;
         }
 
-        .score-text p {
-            color: #8888aa;
-            font-size: 1.05rem;
-        }
-
-        .section-title {
-            font-size: 1.4rem;
-            color: white;
-            margin: 2rem 0 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid rgba(123,47,247,0.3);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .issue-card {
-            padding: 1.5rem;
-            border-radius: 16px;
-            margin-bottom: 1rem;
-            border: 1px solid;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s;
-            animation: cardSlide 0.5s ease-out;
-        }
-
-        @keyframes cardSlide {
-            0% { opacity: 0; transform: translateX(-30px); }
-            100% { opacity: 1; transform: translateX(0); }
-        }
-
-        .issue-card:hover {
-            transform: translateX(5px);
-        }
-
-        .issue-card.critical {
-            background: rgba(225,0,15,0.08);
-            border-color: rgba(225,0,15,0.4);
-        }
-
-        .issue-card.warning {
-            background: rgba(179,64,0,0.08);
-            border-color: rgba(179,64,0,0.4);
-        }
-
-        .issue-card.info {
-            background: rgba(0,229,255,0.08);
-            border-color: rgba(0,229,255,0.4);
-        }
-
-        .issue-card h4 {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            margin-bottom: 0.7rem;
-            font-size: 1.2rem;
-            color: white;
-        }
-
-        .issue-card p {
+        .issue p {
             color: #a0a0c0;
-            font-size: 1rem;
-            margin-bottom: 0.7rem;
-            line-height: 1.7;
-        }
-
-        .issue-card .legal-ref {
-            font-size: 0.9rem;
-            color: #8888aa;
-            font-style: italic;
-            padding: 0.5rem 0;
-        }
-
-        .action-btn {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 700;
             font-size: 0.95rem;
-            margin-top: 0.8rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s;
         }
 
-        .action-btn.primary {
-            background: linear-gradient(135deg, var(--violet-neon), var(--cyan-neon));
+        .issue .legal {
+            color: #8888aa;
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        .letter-btn {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: linear-gradient(135deg, #7B2FF7, #00E5FF);
             color: white;
-            box-shadow: 0 5px 20px rgba(123,47,247,0.3);
-        }
-
-        .action-btn.primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(123,47,247,0.5);
-        }
-
-        .extracted-text {
-            background: rgba(0,0,0,0.3);
-            padding: 1.5rem;
-            border-radius: 12px;
+            border: none;
+            border-radius: 50px;
             font-size: 0.9rem;
-            max-height: 200px;
+            cursor: pointer;
+        }
+
+        .extracted {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #8888aa;
+            max-height: 150px;
             overflow-y: auto;
             margin-top: 1rem;
-            border: 1px solid rgba(123,47,247,0.2);
-            color: #a0a0c0;
-            font-family: 'Courier New', monospace;
-            line-height: 1.8;
         }
 
-        .disclaimer {
-            background: rgba(255,248,225,0.1);
-            border: 1px solid rgba(255,213,79,0.3);
-            padding: 1.5rem;
-            border-radius: 16px;
-            margin-top: 2rem;
-            font-size: 0.95rem;
-            color: #a0a0c0;
-            backdrop-filter: blur(10px);
-        }
-
-        .disclaimer strong {
-            color: #FFD54F;
-        }
-
-        /* ===== MODAL LETTRE ===== */
-        .letter-modal {
+        .modal {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 1rem;
         }
 
-        .letter-modal.active {
+        .modal.active {
             display: flex;
         }
 
-        .letter-content {
-            background: linear-gradient(135deg, #1a1a3e, #0d0d2b);
+        .modal-content {
+            background: #1a1a3e;
             max-width: 700px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            border-radius: 20px;
-            padding: 2.5rem;
-            border: 1px solid rgba(123,47,247,0.3);
-            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            border-radius: 16px;
+            padding: 2rem;
             position: relative;
         }
 
-        .letter-content h2 {
-            color: white;
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
+        .modal-content h2 {
+            margin-bottom: 1rem;
         }
 
         .letter-text {
-            background: rgba(0,0,0,0.4);
-            padding: 2rem;
-            border-radius: 12px;
-            font-family: Georgia, serif;
-            line-height: 2;
+            background: rgba(0,0,0,0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
             white-space: pre-wrap;
-            margin: 1rem 0;
+            font-family: Georgia, serif;
+            line-height: 1.8;
             color: #d0d0e0;
-            border: 1px solid rgba(123,47,247,0.2);
         }
 
         .close-btn {
             position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
+            top: 1rem;
+            right: 1rem;
             background: none;
             border: none;
-            font-size: 2rem;
-            cursor: pointer;
             color: #8888aa;
-            transition: color 0.3s;
+            font-size: 1.5rem;
+            cursor: pointer;
         }
 
-        .close-btn:hover {
-            color: white;
+        .disclaimer {
+            background: rgba(255,248,225,0.1);
+            border: 1px solid rgba(255,213,79,0.3);
+            padding: 1rem;
+            border-radius: 12px;
+            color: #8888aa;
+            font-size: 0.9rem;
         }
 
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-            flex-wrap: wrap;
+        .error {
+            display: none;
+            background: rgba(225,0,15,0.2);
+            border: 1px solid rgba(225,0,15,0.4);
+            color: #ff6b6b;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            text-align: center;
         }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 600px) {
-            .main-title { font-size: 2.5rem; }
-            .main-title::after { right: -30px; font-size: 0.7rem; }
-            .score-card { flex-direction: column; text-align: center; }
-            .header { padding: 2rem 1rem 3rem; }
-            .upload-zone { padding: 2rem 1rem; }
-            .letter-content { padding: 1.5rem; }
+        .error.active {
+            display: block;
+        }
+
+        .success-msg {
+            color: #00E5FF;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
         }
     </style>
 <base target="_blank">
 </head>
 <body>
     <div class="header">
-        <div class="particles" id="particles"></div>
-        <div class="header-content">
-            <div class="logo-container">
-                <div class="logo-icon">🔍</div>
-                <div class="main-title">Bail Check</div>
-            </div>
-            <p class="subtitle">Analysez votre bail en 30 secondes. Gratuit. 100% offline.</p>
-            <div class="badge-free">✨ 100% Gratuit • Aucune donnée envoyée • Open Source</div>
-        </div>
+        <h1 class="main-title">Bail Check</h1>
+        <p class="subtitle">Analysez votre bail en 30 secondes - 100% Gratuit</p>
     </div>
 
     <div class="container">
-        <div class="upload-zone" id="uploadZone">
-            <div class="icon">📄</div>
-            <h2>Glissez votre bail ici</h2>
-            <p>ou cliquez pour sélectionner un fichier</p>
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                📁 Choisir un fichier
-            </button>
+        <div class="error" id="error"></div>
+
+        <!-- METHODE 1: UPLOAD FICHIER -->
+        <div class="method-box">
+            <h2>📁 Methode 1: Charger un fichier</h2>
+            <p>Selectionnez votre bail (PDF, JPG, PNG)</p>
             <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
+            <div class="success-msg" id="fileMsg"></div>
         </div>
 
-        <div class="zone-selector" id="zoneSelector">
-            <label for="zoneType">📍 Type de zone de votre logement :</label>
-            <select id="zoneType">
-                <option value="">-- Sélectionnez --</option>
-                <option value="tendue">Zone tendue (Paris, Lyon, Marseille, Lille, Bordeaux, Montpellier...)</option>
-                <option value="non-tendue">Zone non tendue (reste de la France)</option>
+        <div style="text-align:center; color:#8888aa; margin:1rem 0;">— OU —</div>
+
+        <!-- METHODE 2: COPIER-COLLER -->
+        <div class="method-box">
+            <h2>📋 Methode 2: Copier le texte</h2>
+            <p>Ouvrez votre bail PDF, faites Ctrl+A puis Ctrl+C, et collez ici :</p>
+            <textarea id="pasteArea" placeholder="Collez le texte de votre bail ici..."></textarea>
+            <button onclick="analyzeText()">🔍 Analyser le texte colle</button>
+        </div>
+
+        <!-- ZONE SELECTOR -->
+        <div class="method-box" id="zoneBox" style="display:none;">
+            <h2>📍 Zone de logement</h2>
+            <select id="zoneType" onchange="if(window.lastText) analyzeBail(window.lastText)">
+                <option value="">-- Selectionnez --</option>
+                <option value="tendue">Zone tendue (Paris, Lyon, Marseille...)</option>
+                <option value="non-tendue">Zone non tendue</option>
                 <option value="inconnu">Je ne sais pas</option>
             </select>
         </div>
 
+        <!-- LOADING -->
         <div class="loading" id="loading">
-            <div class="spinner-container">
-                <div class="spinner"></div>
-                <div class="spinner-inner"></div>
-            </div>
+            <div class="spinner"></div>
             <h3>Analyse en cours...</h3>
             <p id="loadingText">Extraction du texte...</p>
         </div>
 
+        <!-- RESULTS -->
         <div class="results" id="results">
-            <div class="score-card" id="scoreCard">
-                <div class="score-circle" id="scoreCircle">--</div>
-                <div class="score-text">
-                    <h3 id="scoreTitle">Analyse en cours...</h3>
-                    <p id="scoreDesc">Nous analysons votre bail...</p>
-                </div>
+            <div class="score" id="score">
+                <div class="score-circle" id="scoreCircle">?</div>
+                <h3 id="scoreTitle">Analyse...</h3>
+                <p id="scoreDesc">Patientez...</p>
             </div>
-
-            <div id="issuesContainer"></div>
-
-            <div class="section-title">📝 Texte extrait de votre bail</div>
-            <div class="extracted-text" id="extractedText"></div>
+            <div id="issues"></div>
+            <h3 style="color:white; margin-top:1.5rem; margin-bottom:0.5rem;">📝 Texte extrait</h3>
+            <div class="extracted" id="extracted"></div>
         </div>
 
         <div class="disclaimer">
-            <strong>⚠️ Avertissement :</strong> Bail Check est un outil d'aide à la décision, pas un avis juridique. 
-            Pour une assistance personnalisée, contactez l'ADIL de votre département (numéro vert 0806 704 604) ou un juriste.
+            <strong>⚠️ Avertissement:</strong> Outil d'aide a la decision, pas un avis juridique. Contactez l'ADIL (0806 704 604) pour de l'aide.
         </div>
     </div>
 
-    <div class="letter-modal" id="letterModal">
-        <div class="letter-content">
+    <!-- MODAL LETTRE -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
             <button class="close-btn" onclick="closeModal()">&times;</button>
-            <h2>✉️ Lettre de recours générée</h2>
+            <h2>✉️ Lettre de recours</h2>
             <div class="letter-text" id="letterText"></div>
-            <div class="modal-actions">
-                <button class="action-btn primary" onclick="copyLetter()">📋 Copier</button>
-                <button class="action-btn primary" onclick="printLetter()">🖨️ Imprimer</button>
-            </div>
+            <button onclick="copyLetter()" style="margin-top:1rem; width:auto; display:inline-block;">📋 Copier</button>
+            <button onclick="printLetter()" style="margin-top:1rem; width:auto; display:inline-block; margin-left:0.5rem;">🖨️ Imprimer</button>
         </div>
     </div>
 
     <script>
-        // Créer les particules
-        function createParticles() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDuration = (Math.random() * 10 + 5) + 's';
-                particle.style.animationDelay = Math.random() * 5 + 's';
-                particle.style.width = (Math.random() * 4 + 2) + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.background = ['#7B2FF7', '#00E5FF', '#FF006E'][Math.floor(Math.random() * 3)];
-                container.appendChild(particle);
-            }
-        }
-        createParticles();
-
-        // Configuration PDF.js
+        // Config PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        const uploadZone = document.getElementById('uploadZone');
+        // Elements
         const fileInput = document.getElementById('fileInput');
+        const fileMsg = document.getElementById('fileMsg');
+        const pasteArea = document.getElementById('pasteArea');
         const loading = document.getElementById('loading');
         const results = document.getElementById('results');
-        const zoneSelector = document.getElementById('zoneSelector');
+        const zoneBox = document.getElementById('zoneBox');
         const zoneType = document.getElementById('zoneType');
+        const error = document.getElementById('error');
 
-        let extractedText = '';
-        let detectedIssues = [];
+        window.lastText = '';
 
-        // Upload par clic sur le bouton
-        uploadZone.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON') {
-                fileInput.click();
+        function showError(msg) {
+            error.textContent = msg;
+            error.classList.add('active');
+            setTimeout(() => error.classList.remove('active'), 5000);
+        }
+
+        // ===== EVENT LISTENER FILE INPUT - VERSION ULTRA SIMPLE =====
+        fileInput.addEventListener('change', function(e) {
+            console.log('CHANGE EVENT FIRED');
+            console.log('Files:', e.target.files);
+
+            if (!e.target.files || e.target.files.length === 0) {
+                console.log('No files selected');
+                return;
             }
-        });
 
-        // Drag & drop
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('dragover');
-        });
+            const file = e.target.files[0];
+            console.log('File:', file.name, file.type, file.size);
 
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
+            fileMsg.textContent = 'Fichier selectionne: ' + file.name + ' - Analyse en cours...';
 
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length) handleFile(files[0]);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) handleFile(e.target.files[0]);
-        });
-
-        zoneType.addEventListener('change', () => {
-            if (extractedText) analyzeBail(extractedText);
+            handleFile(file);
         });
 
         async function handleFile(file) {
             loading.classList.add('active');
             results.classList.remove('active');
-            zoneSelector.style.display = 'block';
+            zoneBox.style.display = 'block';
+            error.classList.remove('active');
 
             try {
-                if (file.type === 'application/pdf') {
-                    extractedText = await extractPDF(file);
+                let text = '';
+                const fileName = file.name.toLowerCase();
+
+                if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+                    document.getElementById('loadingText').textContent = 'Lecture PDF...';
+                    text = await extractPDF(file);
+                } else if (file.type.startsWith('image/') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
+                    document.getElementById('loadingText').textContent = 'OCR en cours...';
+                    text = await extractImage(file);
                 } else {
-                    extractedText = await extractImage(file);
+                    throw new Error('Format non supporte: ' + file.name);
                 }
 
+                if (!text || text.trim().length === 0) {
+                    throw new Error('Aucun texte extrait. Essayez la Methode 2 (copier-coller).');
+                }
+
+                window.lastText = text;
                 document.getElementById('loadingText').textContent = 'Analyse juridique...';
-                analyzeBail(extractedText);
+                analyzeBail(text);
+                fileMsg.textContent = '✅ Analyse terminee!';
 
             } catch (err) {
-                alert('Erreur lors de l'analyse : ' + err.message);
+                console.error('ERROR:', err);
+                showError('Erreur: ' + err.message);
                 loading.classList.remove('active');
+                fileMsg.textContent = '';
             }
         }
 
         async function extractPDF(file) {
-            document.getElementById('loadingText').textContent = 'Lecture du PDF...';
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
             let text = '';
-
             for (let i = 1; i <= pdf.numPages; i++) {
-                document.getElementById('loadingText').textContent = `Lecture page ${i}/${pdf.numPages}...`;
                 const page = await pdf.getPage(i);
                 const content = await page.getTextContent();
                 text += content.items.map(item => item.str).join(' ') + '
 ';
             }
-
             return text;
         }
 
         async function extractImage(file) {
-            document.getElementById('loadingText').textContent = 'Reconnaissance du texte (OCR)...';
             const result = await Tesseract.recognize(file, 'fra', {
                 logger: m => {
                     if (m.status === 'recognizing text') {
-                        document.getElementById('loadingText').textContent = 
-                            `OCR : ${Math.round(m.progress * 100)}%...`;
+                        document.getElementById('loadingText').textContent = 'OCR: ' + Math.round(m.progress * 100) + '%';
                     }
                 }
             });
             return result.data.text;
         }
 
+        // ===== ANALYSE TEXTE COLLE =====
+        function analyzeText() {
+            const text = pasteArea.value.trim();
+            if (!text) {
+                showError('Veuillez coller du texte avant d'analyser.');
+                return;
+            }
+            window.lastText = text;
+            zoneBox.style.display = 'block';
+            analyzeBail(text);
+        }
+
+        // ===== ANALYSE JURIDIQUE =====
         function analyzeBail(text) {
-            detectedIssues = [];
             const lowerText = text.toLowerCase();
             const zone = zoneType.value;
+            const issues = [];
 
-            // === ANALYSE DES CLAUSES ===
-
-            // 1. Interdiction d'animaux
-            if (lowerText.includes('animal') || lowerText.includes('chien') || lowerText.includes('chat')) {
-                if (lowerText.includes('interdit') || lowerText.includes('interdiction') || lowerText.includes('non autoris')) {
-                    detectedIssues.push({
-                        type: 'critical',
-                        icon: '🐕',
-                        title: 'Interdiction d'animaux détectée',
-                        desc: 'Cette clause est ILLÉGALE sur un bail non meublé (loi n°70-685 du 9 juillet 1970). Vous avez le droit de détenir des animaux domestiques.',
-                        legal: 'Article 10 de la loi n°70-685 du 9 juillet 1970',
-                        letterType: 'animaux'
-                    });
-                }
+            // 1. Animaux interdits
+            if ((lowerText.includes('animal') || lowerText.includes('chien') || lowerText.includes('chat')) && 
+                (lowerText.includes('interdit') || lowerText.includes('interdiction'))) {
+                issues.push({
+                    type: 'critical',
+                    icon: '🐕',
+                    title: 'Interdiction d'animaux - ILLEGALE',
+                    desc: 'Vous avez le droit de detenir des animaux domestiques sur un bail non meuble.',
+                    legal: 'Article 10, loi n°70-685 du 9 juillet 1970',
+                    letter: 'animaux'
+                });
             }
 
-            // 2. Charges non justifiées
-            const chargeMatch = text.match(/(charges|provision|provision pour charges)[\s\w]*[:\s]*(\d+)/i);
-            if (chargeMatch) {
-                const montant = parseInt(chargeMatch[2]);
-                if (montant > 100) {
-                    detectedIssues.push({
-                        type: 'warning',
-                        icon: '💰',
-                        title: `Charges élevées : ${montant}€`,
-                        desc: 'Les charges doivent correspondre à des dépenses réelles. Le bailleur doit vous remettre un état détaillé annuel. Si les provisions dépassent de plus de 10% les charges réelles, vous pouvez demander un ajustement.',
-                        legal: 'Article 23 de la loi n°89-462 du 6 juillet 1989 (loi ALUR)',
-                        letterType: 'charges'
-                    });
-                }
+            // 2. Charges
+            const chargeMatch = text.match(/(charges|provision)[\s\w]*[:\s]*(\d+)/i);
+            if (chargeMatch && parseInt(chargeMatch[2]) > 100) {
+                issues.push({
+                    type: 'warning',
+                    icon: '💰',
+                    title: 'Charges elevees: ' + chargeMatch[2] + '€',
+                    desc: 'Demandez un etat detaille des charges. Les provisions doivent correspondre aux depenses reelles.',
+                    legal: 'Article 23, loi ALUR',
+                    letter: 'charges'
+                });
             }
 
-            // 3. Dépôt de garantie
-            const garantieMatch = text.match(/(dépôt de garantie|caution|garantie)[\s\w]*[:\s]*(\d+)/i);
-            const loyerMatch = text.match(/(loyer|montant du loyer|prix)[\s\w]*[:\s]*(\d+)/i);
+            // 3. Garantie
+            const garantieMatch = text.match(/(depot de garantie|caution)[\s\w]*[:\s]*(\d+)/i);
+            const loyerMatch = text.match(/(loyer)[\s\w]*[:\s]*(\d+)/i);
             if (garantieMatch && loyerMatch) {
-                const garantie = parseInt(garantieMatch[2]);
-                const loyer = parseInt(loyerMatch[2]);
-                if (garantie > loyer * 1.1) {
-                    detectedIssues.push({
+                if (parseInt(garantieMatch[2]) > parseInt(loyerMatch[2]) * 1.1) {
+                    issues.push({
                         type: 'critical',
                         icon: '🏦',
-                        title: `Dépôt de garantie excessif : ${garantie}€`,
-                        desc: `Le dépôt de garantie ne peut excéder 1 mois de loyer hors charges pour un bail non meublé. Votre loyer semble être d'environ ${loyer}€.`,
-                        legal: 'Article 22 de la loi n°89-462 du 6 juillet 1989',
-                        letterType: 'garantie'
+                        title: 'Garantie excessive: ' + garantieMatch[2] + '€',
+                        desc: 'Maximum 1 mois de loyer hors charges autorise.',
+                        legal: 'Article 22, loi n°89-462',
+                        letter: 'garantie'
                     });
                 }
             }
 
-            // 4. Loyer encadré (zone tendue)
-            if (zone === 'tendue') {
-                if (lowerText.includes('zone tendue') || lowerText.includes('encadrement')) {
-                    // OK, mentionné
-                } else if (loyerMatch) {
-                    detectedIssues.push({
-                        type: 'info',
-                        icon: '📊',
-                        title: 'Vérification du loyer encadré',
-                        desc: 'Vous êtes en zone tendue. Le loyer de référence est fixé par la préfecture. Vérifiez sur le site encadrementdesloyers.gouv.fr si votre loyer respecte le plafond.',
-                        legal: 'Décret n°2019-773 du 24 juillet 2019',
-                        letterType: null
-                    });
-                }
+            // 4. Zone tendue
+            if (zone === 'tendue' && loyerMatch && !lowerText.includes('zone tendue')) {
+                issues.push({
+                    type: 'info',
+                    icon: '📊',
+                    title: 'Verifier le loyer encadre',
+                    desc: 'En zone tendue, verifiez sur encadrementdesloyers.gouv.fr',
+                    legal: 'Decret n°2019-773',
+                    letter: null
+                });
             }
 
-            // 5. Travaux à charge du locataire
-            if (lowerText.includes('travaux') && (lowerText.includes('locataire') || lowerText.includes('preneur'))) {
-                if (lowerText.includes('gros') || lowerText.includes('structure') || lowerText.includes('toiture') || lowerText.includes('façade')) {
-                    detectedIssues.push({
-                        type: 'critical',
-                        icon: '🔨',
-                        title: 'Travaux à votre charge détectés',
-                        desc: 'Les gros travaux (toiture, façade, structure, plomberie principale) sont à la charge du bailleur. Seuls les petites réparations locatives vous incombent.',
-                        legal: 'Article 606 du Code civil, Article 7 de la loi n°89-462',
-                        letterType: 'travaux'
-                    });
-                }
+            // 5. Travaux
+            if (lowerText.includes('travaux') && lowerText.includes('locataire') && 
+                (lowerText.includes('toiture') || lowerText.includes('facade') || lowerText.includes('structure'))) {
+                issues.push({
+                    type: 'critical',
+                    icon: '🔨',
+                    title: 'Travaux a votre charge - ILLEGAL',
+                    desc: 'Les grosses reparations sont a la charge du bailleur.',
+                    legal: 'Article 606 Code civil',
+                    letter: 'travaux'
+                });
             }
 
-            // 6. Préavis
-            if (lowerText.includes('préavis')) {
-                if (zone === 'tendue' && lowerText.includes('3 mois') && !lowerText.includes('1 mois')) {
-                    detectedIssues.push({
-                        type: 'critical',
-                        icon: '📅',
-                        title: 'Préavis de 3 mois en zone tendue',
-                        desc: 'En zone tendue, le préavis de départ est réduit à 1 mois (au lieu de 3). Cette clause est illégale si elle impose 3 mois.',
-                        legal: 'Article 15 de la loi n°89-462 modifié par la loi ALUR',
-                        letterType: 'preavis'
-                    });
-                }
+            // 6. Preavis
+            if (zone === 'tendue' && lowerText.includes('preavis') && lowerText.includes('3 mois')) {
+                issues.push({
+                    type: 'critical',
+                    icon: '📅',
+                    title: 'Preavis 3 mois en zone tendue - ILLEGAL',
+                    desc: 'En zone tendue, le preavis est de 1 mois seulement.',
+                    legal: 'Article 15, loi ALUR',
+                    letter: 'preavis'
+                });
             }
 
-            // 7. Clause de solidarité (colocation)
-            if (lowerText.includes('solidarité') && lowerText.includes('coloc')) {
-                detectedIssues.push({
+            // 7. Solidarite
+            if (lowerText.includes('solidarite') && lowerText.includes('coloc')) {
+                issues.push({
                     type: 'warning',
                     icon: '👥',
-                    title: 'Clause de solidarité',
-                    desc: 'Si vous êtes en colocation, la clause de solidarité vous rend responsable du loyer entier si votre colocataire ne paie pas. Demandez une clause de non-solidarité.',
-                    legal: 'Article 8 de la loi n°89-462',
-                    letterType: 'solidarite'
+                    title: 'Clause de solidarite',
+                    desc: 'Vous etes responsable du loyer entier si votre colocataire ne paie pas.',
+                    legal: 'Article 8, loi n°89-462',
+                    letter: 'solidarite'
                 });
             }
 
-            // 8. Assurance habitation obligatoire
-            if (lowerText.includes('assurance') && lowerText.includes('obligatoire')) {
-                detectedIssues.push({
-                    type: 'info',
-                    icon: '🛡️',
-                    title: 'Assurance obligatoire',
-                    desc: 'L'assurance habitation est bien obligatoire, mais vous avez le droit de choisir votre assureur. Le bailleur ne peut pas vous imposer un assureur particulier.',
-                    legal: 'Article 7 de la loi n°89-462',
-                    letterType: null
-                });
-            }
-
-            // 9. Indexation du loyer
-            if (lowerText.includes('indexation') || lowerText.includes('révision') || lowerText.includes('irl')) {
-                detectedIssues.push({
-                    type: 'info',
-                    icon: '📈',
-                    title: 'Indexation du loyer (IRL)',
-                    desc: 'La révision annuelle doit suivre l'Indice de Référence des Loyers (IRL). Vérifiez que l'index utilisé est bien celui de l'INSEE et que la date de révision est correcte.',
-                    legal: 'Article 17 de la loi n°89-462',
-                    letterType: null
-                });
-            }
-
-            // 10. Taxe d'habitation
-            if (lowerText.includes('taxe d'habitation') || lowerText.includes('taxe habitation')) {
-                detectedIssues.push({
-                    type: 'info',
-                    icon: '🏛️',
-                    title: 'Taxe d'habitation',
-                    desc: 'La taxe d'habitation est abolie pour les résidences principales depuis 2023. Si votre bail la mentionne encore, c'est une clause obsolète.',
-                    legal: 'Loi de finances pour 2023',
-                    letterType: null
-                });
-            }
-
-            // 11. Décence (mention manquante)
-            if (!lowerText.includes('décence') && !lowerText.includes('décent')) {
-                detectedIssues.push({
+            // 8. Decence
+            if (!lowerText.includes('decence') && !lowerText.includes('decent')) {
+                issues.push({
                     type: 'warning',
                     icon: '🏠',
-                    title: 'Absence de mention de décence',
-                    desc: 'Le bail doit mentionner que le logement est décent (conforme aux critères de la loi). Si ce n'est pas précisé, demandez une attestation écrite.',
-                    legal: 'Article 6 de la loi n°89-462, Décret n°2002-120',
-                    letterType: 'decence'
+                    title: 'Absence de mention de decence',
+                    desc: 'Le bail doit mentionner que le logement est decent.',
+                    legal: 'Article 6, loi n°89-462',
+                    letter: 'decence'
                 });
             }
 
-            // === AFFICHAGE RÉSULTATS ===
+            // 9. Taxe habitation
+            if (lowerText.includes('taxe d'habitation') || lowerText.includes('taxe habitation')) {
+                issues.push({
+                    type: 'info',
+                    icon: '🏛️',
+                    title: 'Taxe d'habitation mentionnee',
+                    desc: 'Cette taxe est abolie depuis 2023 pour les residences principales.',
+                    legal: 'Loi de finances 2023',
+                    letter: null
+                });
+            }
 
+            // 10. IRL
+            if (lowerText.includes('irl') || lowerText.includes('indexation')) {
+                issues.push({
+                    type: 'info',
+                    icon: '📈',
+                    title: 'Indexation IRL',
+                    desc: 'Verifiez que l'index utilise est bien celui de l'INSEE.',
+                    legal: 'Article 17, loi n°89-462',
+                    letter: null
+                });
+            }
+
+            // AFFICHAGE
             loading.classList.remove('active');
             results.classList.add('active');
 
-            // Score
-            const criticalCount = detectedIssues.filter(i => i.type === 'critical').length;
-            const warningCount = detectedIssues.filter(i => i.type === 'warning').length;
+            const critical = issues.filter(i => i.type === 'critical').length;
+            const warning = issues.filter(i => i.type === 'warning').length;
 
-            const scoreCard = document.getElementById('scoreCard');
+            const score = document.getElementById('score');
             const scoreCircle = document.getElementById('scoreCircle');
             const scoreTitle = document.getElementById('scoreTitle');
             const scoreDesc = document.getElementById('scoreDesc');
 
-            if (criticalCount > 0) {
-                scoreCard.className = 'score-card danger';
-                scoreCircle.className = 'score-circle danger';
+            if (critical > 0) {
+                score.className = 'score danger';
                 scoreCircle.textContent = '!';
-                scoreTitle.textContent = `${criticalCount} problème(s) critique(s) détecté(s)`;
-                scoreDesc.textContent = 'Des clauses illégales ou dangereuses ont été identifiées. Agissez rapidement.';
-            } else if (warningCount > 0) {
-                scoreCard.className = 'score-card warning';
-                scoreCircle.className = 'score-circle warning';
+                scoreTitle.textContent = critical + ' probleme(s) critique(s)';
+                scoreDesc.textContent = 'Des clauses illegales ont ete detectees!';
+            } else if (warning > 0) {
+                score.className = 'score warning';
                 scoreCircle.textContent = '?';
-                scoreTitle.textContent = `${warningCount} point(s) d'attention`;
-                scoreDesc.textContent = 'Votre bail présente des clauses à vérifier ou à négocier.';
+                scoreTitle.textContent = warning + ' point(s) d'attention';
+                scoreDesc.textContent = 'Verifiez ces clauses attentivement.';
             } else {
-                scoreCard.className = 'score-card ok';
-                scoreCircle.className = 'score-circle ok';
+                score.className = 'score ok';
                 scoreCircle.textContent = '✓';
                 scoreTitle.textContent = 'Bail conforme';
-                scoreDesc.textContent = 'Aucun problème majeur détecté. Vérifiez tout de même les points d'information ci-dessous.';
+                scoreDesc.textContent = 'Aucun probleme majeur detecte.';
             }
 
-            // Issues
-            const container = document.getElementById('issuesContainer');
+            const container = document.getElementById('issues');
             container.innerHTML = '';
 
-            if (detectedIssues.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#8888aa;padding:2rem;">Aucun problème détecté dans les clauses analysées.</p>';
+            if (issues.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#8888aa;">Aucun probleme detecte.</p>';
             } else {
-                detectedIssues.forEach((issue, index) => {
-                    const card = document.createElement('div');
-                    card.className = `issue-card ${issue.type}`;
-                    card.style.animationDelay = `${index * 0.1}s`;
-                    card.innerHTML = `
-                        <h4>${issue.icon} ${issue.title}</h4>
-                        <p>${issue.desc}</p>
-                        <p class="legal-ref">📚 ${issue.legal}</p>
-                        ${issue.letterType ? `<button class="action-btn primary" onclick="generateLetter('${issue.letterType}', '${issue.title.replace(/'/g, "\'")}')">✉️ Générer une lettre de recours</button>` : ''}
-                    `;
-                    container.appendChild(card);
+                issues.forEach(issue => {
+                    const div = document.createElement('div');
+                    div.className = 'issue ' + issue.type;
+
+                    let btn = '';
+                    if (issue.letter) {
+                        btn = '<button class="letter-btn" onclick="showLetter('' + issue.letter + '')">✉️ Generer lettre</button>';
+                    }
+
+                    div.innerHTML = 
+                        '<h4>' + issue.icon + ' ' + issue.title + '</h4>' +
+                        '<p>' + issue.desc + '</p>' +
+                        '<p class="legal">📚 ' + issue.legal + '</p>' +
+                        btn;
+                    container.appendChild(div);
                 });
             }
 
-            // Texte extrait
-            document.getElementById('extractedText').textContent = text.substring(0, 3000) + (text.length > 3000 ? '...' : '');
-
-            // Scroll vers les résultats
-            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('extracted').textContent = text.substring(0, 2000) + (text.length > 2000 ? '...' : '');
+            results.scrollIntoView({behavior: 'smooth'});
         }
 
-        function generateLetter(type, issueTitle) {
-            const modal = document.getElementById('letterModal');
-            const letterText = document.getElementById('letterText');
+        // ===== LETTRES =====
+        const letters = {
+            animaux: function() {
+                return '[Votre nom]
+[Adresse]
 
-            const today = new Date().toLocaleDateString('fr-FR');
+A l'attention du bailleur
+[Adresse bailleur]
 
-            const letters = {
-                animaux: `[Votre nom et adresse]
+Le ' + new Date().toLocaleDateString('fr-FR') + '
 
-À l'attention du bailleur
-[Adresse du bailleur]
-
-Le ${today}
-
-Objet : Contestation de la clause d'interdiction d'animaux domestiques
+Objet: Contestation clause interdiction animaux
 
 Madame, Monsieur,
 
-Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+Par courrier en date du [date bail], vous m'avez notifie un bail pour le logement sis [adresse].
 
-Je constate que ce bail contient une clause interdisant la détention d'animaux domestiques.
+Je constate une clause interdisant les animaux domestiques.
 
-Or, conformément à l'article 10 de la loi n°70-685 du 9 juillet 1970, le locataire d'un logement loué non meublé ou d'un logement loué meublé autre qu'un logement de tourisme a le droit de détenir un ou plusieurs animaux domestiques.
+Or, conformement a l'article 10 de la loi n°70-685 du 9 juillet 1970, le locataire d'un logement non meuble a le droit de detenir des animaux domestiques.
 
-Cette clause est donc illégale et non écrite.
+Cette clause est donc illegale et non ecrite.
 
-Par la présente, je vous informe que j'exerce mon droit de détenir des animaux domestiques dans mon logement, dans le respect des règles de copropriété et de voisinage.
+Je vous prie d'agreer mes salutations distinguees.
 
-Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+[Signature]';
+            },
+            charges: function() {
+                return '[Votre nom]
+[Adresse]
 
-[Signature]`,
+A l'attention du bailleur
+[Adresse bailleur]
 
-                charges: `[Votre nom et adresse]
+Le ' + new Date().toLocaleDateString('fr-FR') + '
 
-À l'attention du bailleur
-[Adresse du bailleur]
-
-Le ${today}
-
-Objet : Demande de régularisation des provisions pour charges
-
-Madame, Monsieur,
-
-Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
-
-Aux termes de ce bail, je verse des provisions pour charges d'un montant de [montant]€.
-
-Conformément à l'article 23 de la loi n°89-462 du 6 juillet 1989 (loi ALUR), les provisions pour charges doivent correspondre au montant prévisionnel des dépenses récupérables et faire l'objet d'une régularisation annuelle sur présentation d'un état détaillé.
-
-À ce jour, je n'ai pas reçu l'état détaillé des charges pour l'année [année].
-
-Je vous demande donc de bien vouloir me communiquer dans les meilleurs délais :
-1. L'état détaillé des charges de l'année écoulée
-2. La régularisation correspondante (remboursement ou complément)
-3. Le montant justifié des nouvelles provisions pour l'année à venir
-
-À défaut de réponse dans un délai de 2 mois, je me verrai dans l'obligation de saisir la commission départementale de conciliation ou le juge des contentieux de la protection.
-
-Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
-
-[Signature]`,
-
-                garantie: `[Votre nom et adresse]
-
-À l'attention du bailleur
-[Adresse du bailleur]
-
-Le ${today}
-
-Objet : Demande de remboursement du dépôt de garantie excessif
+Objet: Demande etat detaille des charges
 
 Madame, Monsieur,
 
-Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+Par courrier en date du [date bail], vous m'avez notifie un bail pour le logement sis [adresse].
 
-Aux termes de ce bail, vous exigez un dépôt de garantie d'un montant de [montant]€.
+Je verse des provisions pour charges et n'ai pas recu l'etat detaille annuel.
 
-Or, conformément à l'article 22 de la loi n°89-462 du 6 juillet 1989, le dépôt de garantie pour un bail non meublé ne peut excéder un mois de loyer hors charges.
+Conformement a l'article 23 de la loi ALUR, je vous demande:
+1. L'etat detaille des charges de l'annee ecoulee
+2. La regularisation correspondante
+3. Le montant justifie des nouvelles provisions
 
-Le loyer mensuel hors charges étant de [loyer]€, le dépôt de garantie ne peut excéder [loyer]€.
+A defaut de reponse sous 2 mois, je saisirai la commission de conciliation.
 
-Je vous demande donc de bien vouloir me rembourser la somme excédentaire de [montant - loyer]€ dans un délai de 1 mois.
+Je vous prie d'agreer mes salutations distinguees.
 
-À défaut, je me verrai dans l'obligation de saisir le juge des contentieux de la protection.
+[Signature]';
+            },
+            garantie: function() {
+                return '[Votre nom]
+[Adresse]
 
-Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+A l'attention du bailleur
+[Adresse bailleur]
 
-[Signature]`,
+Le ' + new Date().toLocaleDateString('fr-FR') + '
 
-                travaux: `[Votre nom et adresse]
-
-À l'attention du bailleur
-[Adresse du bailleur]
-
-Le ${today}
-
-Objet : Contestation de la prise en charge de gros travaux
-
-Madame, Monsieur,
-
-Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
-
-Aux termes de ce bail, vous me demandez de prendre en charge des travaux de [nature des travaux].
-
-Or, conformément à l'article 606 du Code civil et à l'article 7 de la loi n°89-462 du 6 juillet 1989, les grosses réparations, notamment celles portant sur la toiture, les façades, la structure, la plomberie principale et l'installation électrique générale, sont à la charge du bailleur.
-
-Seules les petites réparations locatives (entretien courant, remplacement des joints, etc.) incombent au locataire.
-
-Les travaux mentionnés dans le bail relèvent des grosses réparations et sont donc à votre charge.
-
-Je vous demande de bien vouloir procéder à ces travaux dans les meilleurs délais, conformément à vos obligations légales.
-
-À défaut, je me verrai dans l'obligation de saisir le juge des contentieux de la protection.
-
-Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
-
-[Signature]`,
-
-                preavis: `[Votre nom et adresse]
-
-À l'attention du bailleur
-[Adresse du bailleur]
-
-Le ${today}
-
-Objet : Réduction du préavis de départ en zone tendue
+Objet: Remboursement depot de garantie excessif
 
 Madame, Monsieur,
 
-Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement], situé en zone tendue.
+Vous exigez un depot de garantie de [montant]€.
 
-Aux termes de ce bail, vous prévoyez un préavis de départ de 3 mois.
+Or, l'article 22 de la loi n°89-462 limite ce depot a 1 mois de loyer hors charges ([loyer]€).
 
-Or, conformément à l'article 15 de la loi n°89-462 du 6 juillet 1989 modifié par la loi ALUR, le préavis de départ du locataire est réduit à 1 mois dans les zones tendues.
+Je vous demande de me rembourser l'excedent sous 1 mois.
 
-Cette clause est donc illégale et non écrite.
+A defaut, je saisirai le juge des contentieux de la protection.
 
-Je vous informe que je quitterai les lieux le [date de départ], soit 1 mois après la notification de mon préavis.
+Je vous prie d'agreer mes salutations distinguees.
 
-Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+[Signature]';
+            },
+            travaux: function() {
+                return '[Votre nom]
+[Adresse]
 
-[Signature]`,
+A l'attention du bailleur
+[Adresse bailleur]
 
-                solidarite: `[Votre nom et adresse]
+Le ' + new Date().toLocaleDateString('fr-FR') + '
 
-À l'attention du bailleur
-[Adresse du bailleur]
-
-Le ${today}
-
-Objet : Demande de suppression de la clause de solidarité
-
-Madame, Monsieur,
-
-Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
-
-Aux termes de ce bail, une clause de solidarité nous rend solidaires avec [nom du colocataire] pour le paiement du loyer et des charges.
-
-Or, conformément à l'article 8 de la loi n°89-462 du 6 juillet 1989, les colocataires peuvent demander au bailleur de supprimer la clause de solidarité, chacun n'étant alors redevable que de sa part de loyer et de charges.
-
-Je vous demande donc de bien vouloir modifier le bail en supprimant la clause de solidarité à mon égard.
-
-Je reste évidemment redevable de ma part de loyer et de charges, soit [montant]€.
-
-Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
-
-[Signature]`,
-
-                decence: `[Votre nom et adresse]
-
-À l'attention du bailleur
-[Adresse du bailleur]
-
-Le ${today}
-
-Objet : Demande d'attestation de décence du logement
+Objet: Contestation prise en charge travaux
 
 Madame, Monsieur,
 
-Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+Vous me demandez de prendre en charge des travaux de [nature].
 
-Je constate que ce bail ne mentionne pas expressément que le logement est décent au sens de l'article 6 de la loi n°89-462 du 6 juillet 1989 et du décret n°2002-120 du 30 janvier 2002.
+Or, les grosses reparations (toiture, facade, structure) sont a votre charge (art. 606 Code civil).
 
-Conformément à ces textes, le logement doit notamment :
-- Disposer d'une fenêtre ou d'une porte vitrée
-- Disposer d'une installation d'eau potable et d'évacuation des eaux usées
-- Disposer d'un chauffage et d'une installation électrique conformes
-- Ne pas présenter de risques manifestes pour la sécurité ou la santé
+Je vous demande de proceder a ces travaux dans les meilleurs delais.
 
-Je vous demande de bien vouloir me remettre une attestation écrite certifiant que le logement répond à ces critères de décence.
+A defaut, je saisirai le juge des contentieux de la protection.
 
-À défaut, je me verrai dans l'obligation de saisir le juge des contentieux de la protection pour obtenir la résiliation du bail ou une réduction de loyer.
+Je vous prie d'agreer mes salutations distinguees.
 
-Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+[Signature]';
+            },
+            preavis: function() {
+                return '[Votre nom]
+[Adresse]
 
-[Signature]`
-            };
+A l'attention du bailleur
+[Adresse bailleur]
 
-            letterText.textContent = letters[type] || 'Lettre non disponible pour ce type de problème.';
-            modal.classList.add('active');
+Le ' + new Date().toLocaleDateString('fr-FR') + '
+
+Objet: Reduction preavis zone tendue
+
+Madame, Monsieur,
+
+Votre bail prevoit un preavis de 3 mois.
+
+Or, en zone tendue, le preavis est reduit a 1 mois (art. 15 loi ALUR).
+
+Cette clause est illegale. Je quitterai les lieux le [date], soit 1 mois apres notification.
+
+Je vous prie d'agreer mes salutations distinguees.
+
+[Signature]';
+            },
+            solidarite: function() {
+                return '[Votre nom]
+[Adresse]
+
+A l'attention du bailleur
+[Adresse bailleur]
+
+Le ' + new Date().toLocaleDateString('fr-FR') + '
+
+Objet: Suppression clause solidarite
+
+Madame, Monsieur,
+
+Une clause de solidarite nous rend solidaires avec [colocataire].
+
+Or, l'article 8 de la loi n°89-462 permet de supprimer cette clause.
+
+Je demande la modification du bail. Je reste redevable de ma part: [montant]€.
+
+Je vous prie d'agreer mes salutations distinguees.
+
+[Signature]';
+            },
+            decence: function() {
+                return '[Votre nom]
+[Adresse]
+
+A l'attention du bailleur
+[Adresse bailleur]
+
+Le ' + new Date().toLocaleDateString('fr-FR') + '
+
+Objet: Attestation decence logement
+
+Madame, Monsieur,
+
+Le bail ne mentionne pas la decence du logement.
+
+Conformement a l'article 6 et au decret n°2002-120, le logement doit:
+- Avoir une fenetre/porte vitree
+- Avoir eau potable et evacuation
+- Avoir chauffage et electricite conformes
+- Ne pas presenter de risques pour la sante
+
+Je demande une attestation ecrite.
+
+A defaut, je saisirai le juge pour resiliation ou reduction de loyer.
+
+Je vous prie d'agreer mes salutations distinguees.
+
+[Signature]';
+            }
+        };
+
+        function showLetter(type) {
+            document.getElementById('letterText').textContent = letters[type]();
+            document.getElementById('modal').classList.add('active');
         }
 
         function closeModal() {
-            document.getElementById('letterModal').classList.remove('active');
+            document.getElementById('modal').classList.remove('active');
         }
 
         function copyLetter() {
-            const text = document.getElementById('letterText').textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Lettre copiée dans le presse-papiers !');
+            navigator.clipboard.writeText(document.getElementById('letterText').textContent).then(() => {
+                alert('Lettre copiee!');
             });
         }
 
         function printLetter() {
-            const text = document.getElementById('letterText').textContent;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                <head><title>Lettre de recours</title></head>
-                <body style="font-family: Georgia, serif; padding: 40px; line-height: 1.8; white-space: pre-wrap;">
-                    ${text.replace(/
-/g, '<br>')}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
+            const w = window.open('', '_blank');
+            w.document.write('<pre style="font-family:Georgia; padding:40px; line-height:1.8;">' + document.getElementById('letterText').textContent.replace(/
+/g, '<br>') + '</pre>');
+            w.print();
         }
 
-        // Fermer modal en cliquant à l'extérieur
-        document.getElementById('letterModal').addEventListener('click', (e) => {
-            if (e.target.id === 'letterModal') closeModal();
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
         });
+
+        console.log('Bail Check v4.0 loaded');
     </script>
 </body>
 </html>
