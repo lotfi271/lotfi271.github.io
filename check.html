@@ -267,7 +267,7 @@
             box-shadow: 0 10px 30px rgba(123,47,247,0.3);
             position: relative;
             z-index: 10;
-            pointer-events: all;
+            pointer-events: auto;
         }
 
         .upload-btn:hover {
@@ -662,6 +662,17 @@
             display: block;
         }
 
+        .debug-info {
+            background: rgba(0,229,255,0.1);
+            border: 1px solid rgba(0,229,255,0.3);
+            color: #00e5ff;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 600px) {
             .main-title { font-size: 2.5rem; }
             .main-title::after { right: -30px; font-size: 0.7rem; }
@@ -682,17 +693,18 @@
                 <div class="main-title">Bail Check</div>
             </div>
             <p class="subtitle">Analysez votre bail en 30 secondes. Gratuit. 100% offline.</p>
-            <div class="badge-free">✨ 100% Gratuit • Aucune donnée envoyée • Open Source</div>
+            <div class="badge-free">✨ 100% Gratuit • Aucune donnee envoyee • Open Source</div>
         </div>
     </div>
 
     <div class="container">
         <div class="error-message" id="errorMessage"></div>
+        <div class="debug-info" id="debugInfo" style="display:none;"></div>
 
         <div class="upload-zone" id="uploadZone">
             <div class="icon">📄</div>
-            <h2>Glissez votre bail ici</h2>
-            <p>ou cliquez pour sélectionner un fichier</p>
+            <h2>Deposez votre bail ici</h2>
+            <p>PDF, JPG ou PNG - Glissez ou cliquez ci-dessous</p>
             <button class="upload-btn" id="uploadBtn" type="button">
                 📁 Choisir un fichier
             </button>
@@ -752,7 +764,7 @@
     </div>
 
     <script>
-        // Creer les particules
+        // ===== CREER LES PARTICULES =====
         function createParticles() {
             const container = document.getElementById('particles');
             for (let i = 0; i < 30; i++) {
@@ -769,9 +781,10 @@
         }
         createParticles();
 
-        // Configuration PDF.js
+        // ===== CONFIGURATION PDF.JS =====
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+        // ===== REFERENCES DOM =====
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -780,81 +793,126 @@
         const zoneSelector = document.getElementById('zoneSelector');
         const zoneType = document.getElementById('zoneType');
         const errorMessage = document.getElementById('errorMessage');
+        const debugInfo = document.getElementById('debugInfo');
 
         let extractedText = '';
         let detectedIssues = [];
 
+        // ===== FONCTIONS UTILITAIRES =====
         function showError(msg) {
-            errorMessage.textContent = '❌ ' + msg;
+            errorMessage.textContent = msg;
             errorMessage.classList.add('active');
-            setTimeout(() => errorMessage.classList.remove('active'), 5000);
+            setTimeout(function() { errorMessage.classList.remove('active'); }, 6000);
         }
 
-        // CORRECTION 1: Clic sur le bouton explicitement
+        function showDebug(msg) {
+            debugInfo.textContent = msg;
+            debugInfo.style.display = 'block';
+        }
+
+        // ===== BOUTON UPLOAD =====
+        // Le bouton a son propre event listener - NE PAS propager au parent
         uploadBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
             e.preventDefault();
-            console.log('Bouton clicke - ouverture file input');
+            e.stopPropagation();
+            console.log('=== BOUTON CLIQUE ===');
             fileInput.click();
+            return false;
         });
 
-        // CORRECTION 2: Clic sur la zone (mais pas sur le bouton)
-        uploadZone.addEventListener('click', function(e) {
-            // Ne pas declencher si on a clique sur le bouton
-            if (e.target === uploadBtn || e.target.closest('#uploadBtn')) {
-                return;
-            }
-            console.log('Zone clickee - ouverture file input');
-            fileInput.click();
-        });
-
-        // CORRECTION 3: File input change
+        // ===== FILE INPUT CHANGE =====
         fileInput.addEventListener('change', function(e) {
-            console.log('File input change:', e.target.files);
+            console.log('=== FILE INPUT CHANGE ===', e.target.files);
             if (e.target.files && e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
             }
         });
 
-        // Drag & drop
-        uploadZone.addEventListener('dragover', function(e) {
+        // ===== CLIC SUR LA ZONE (mais pas sur le bouton) =====
+        uploadZone.addEventListener('click', function(e) {
+            // Si on a clique sur le bouton ou ses enfants, ne rien faire (deja gere par le bouton)
+            if (e.target === uploadBtn || uploadBtn.contains(e.target)) {
+                return;
+            }
+            console.log('=== ZONE CLIQUEE (hors bouton) ===');
+            fileInput.click();
+        });
+
+        // ===== DRAG & DROP - ULTRA ROBUSTE =====
+        // On attache les events sur le document ENTIER pour capturer tout drag
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+            document.body.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        // Quand on entre dans la zone
+        uploadZone.addEventListener('dragenter', function(e) {
             e.preventDefault();
             e.stopPropagation();
             uploadZone.classList.add('dragover');
+            console.log('=== DRAG ENTER ===');
         });
 
+        // Quand on survole
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            uploadZone.classList.add('dragover');
+        });
+
+        // Quand on quitte
         uploadZone.addEventListener('dragleave', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            uploadZone.classList.remove('dragover');
+            // Ne retirer que si on quitte vraiment la zone (pas un enfant)
+            if (!uploadZone.contains(e.relatedTarget)) {
+                uploadZone.classList.remove('dragover');
+            }
         });
 
+        // Quand on depose
         uploadZone.addEventListener('drop', function(e) {
             e.preventDefault();
             e.stopPropagation();
             uploadZone.classList.remove('dragover');
+
+            console.log('=== DROP ===');
+            console.log('DataTransfer:', e.dataTransfer);
+            console.log('Files:', e.dataTransfer.files);
+            console.log('Types:', e.dataTransfer.types);
+
             const files = e.dataTransfer.files;
             if (files && files.length > 0) {
-                console.log('Fichier droppe:', files[0].name, files[0].type);
+                console.log('Fichier droppe:', files[0].name, 'type:', files[0].type);
                 handleFile(files[0]);
+            } else {
+                showError('Aucun fichier detecte. Essayez avec le bouton "Choisir un fichier".');
             }
         });
 
+        // ===== ZONE SELECTOR =====
         zoneType.addEventListener('change', function() {
             if (extractedText) analyzeBail(extractedText);
         });
 
+        // ===== TRAITEMENT DU FICHIER =====
         async function handleFile(file) {
-            console.log('Traitement fichier:', file.name, 'type:', file.type, 'taille:', file.size);
+            console.log('=== TRAITEMENT FICHIER ===');
+            console.log('Nom:', file.name);
+            console.log('Type:', file.type);
+            console.log('Taille:', file.size);
 
             // Verification du type de fichier
-            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-            const validExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
             const fileName = file.name.toLowerCase();
-            const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+            const isPDF = file.type === 'application/pdf' || fileName.endsWith('.pdf');
+            const isImage = file.type.startsWith('image/') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png');
 
-            if (!validTypes.includes(file.type) && !hasValidExtension) {
-                showError('Format non supporte. Utilisez PDF, JPG ou PNG.');
+            if (!isPDF && !isImage) {
+                showError('Format non supporte : ' + file.name + '. Utilisez PDF, JPG ou PNG.');
                 return;
             }
 
@@ -866,7 +924,7 @@
             try {
                 let text = '';
 
-                if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+                if (isPDF) {
                     text = await extractPDF(file);
                 } else {
                     text = await extractImage(file);
@@ -887,6 +945,7 @@
             }
         }
 
+        // ===== EXTRACTION PDF =====
         async function extractPDF(file) {
             document.getElementById('loadingText').textContent = 'Lecture du PDF...';
             const arrayBuffer = await file.arrayBuffer();
@@ -894,35 +953,35 @@
             let text = '';
 
             for (let i = 1; i <= pdf.numPages; i++) {
-                document.getElementById('loadingText').textContent = `Lecture page ${i}/${pdf.numPages}...`;
+                document.getElementById('loadingText').textContent = 'Lecture page ' + i + '/' + pdf.numPages + '...';
                 const page = await pdf.getPage(i);
                 const content = await page.getTextContent();
-                text += content.items.map(item => item.str).join(' ') + '
+                text += content.items.map(function(item) { return item.str; }).join(' ') + '
 ';
             }
 
             return text;
         }
 
+        // ===== EXTRACTION IMAGE (OCR) =====
         async function extractImage(file) {
             document.getElementById('loadingText').textContent = 'Reconnaissance du texte (OCR)...';
             const result = await Tesseract.recognize(file, 'fra', {
-                logger: m => {
+                logger: function(m) {
                     if (m.status === 'recognizing text') {
                         document.getElementById('loadingText').textContent = 
-                            `OCR : ${Math.round(m.progress * 100)}%...`;
+                            'OCR : ' + Math.round(m.progress * 100) + '%...';
                     }
                 }
             });
             return result.data.text;
         }
 
+        // ===== ANALYSE DU BAIL =====
         function analyzeBail(text) {
             detectedIssues = [];
             const lowerText = text.toLowerCase();
             const zone = zoneType.value;
-
-            // === ANALYSE DES CLAUSES ===
 
             // 1. Interdiction d'animaux
             if (lowerText.includes('animal') || lowerText.includes('chien') || lowerText.includes('chat')) {
@@ -946,7 +1005,7 @@
                     detectedIssues.push({
                         type: 'warning',
                         icon: '💰',
-                        title: `Charges elevees : ${montant}€`,
+                        title: 'Charges elevees : ' + montant + '€',
                         desc: 'Les charges doivent correspondre a des depenses reelles. Le bailleur doit vous remettre un etat detaille annuel. Si les provisions depassent de plus de 10% les charges reelles, vous pouvez demander un ajustement.',
                         legal: 'Article 23 de la loi n°89-462 du 6 juillet 1989 (loi ALUR)',
                         letterType: 'charges'
@@ -964,8 +1023,8 @@
                     detectedIssues.push({
                         type: 'critical',
                         icon: '🏦',
-                        title: `Depot de garantie excessif : ${garantie}€`,
-                        desc: `Le depot de garantie ne peut exceder 1 mois de loyer hors charges pour un bail non meuble. Votre loyer semble etre d'environ ${loyer}€.`,
+                        title: 'Depot de garantie excessif : ' + garantie + '€',
+                        desc: 'Le depot de garantie ne peut exceder 1 mois de loyer hors charges pour un bail non meuble. Votre loyer semble etre d'environ ' + loyer + '€.',
                         legal: 'Article 22 de la loi n°89-462 du 6 juillet 1989',
                         letterType: 'garantie'
                     });
@@ -1082,8 +1141,8 @@
             results.classList.add('active');
 
             // Score
-            const criticalCount = detectedIssues.filter(i => i.type === 'critical').length;
-            const warningCount = detectedIssues.filter(i => i.type === 'warning').length;
+            const criticalCount = detectedIssues.filter(function(i) { return i.type === 'critical'; }).length;
+            const warningCount = detectedIssues.filter(function(i) { return i.type === 'warning'; }).length;
 
             const scoreCard = document.getElementById('scoreCard');
             const scoreCircle = document.getElementById('scoreCircle');
@@ -1143,6 +1202,7 @@
             results.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
+        // ===== GENERATION LETTRE =====
         function generateLetter(type, issueTitle) {
             const modal = document.getElementById('letterModal');
             const letterText = document.getElementById('letterText');
@@ -1375,15 +1435,11 @@ Je vous prie d'agreer, Madame, Monsieur, l'expression de mes salutations disting
             if (e.target.id === 'letterModal') closeModal();
         });
 
-        // Log de debug
-        console.log('Bail Check v2.0 charge');
-        console.log('Elements:', {
-            uploadZone: !!uploadZone,
-            fileInput: !!fileInput,
-            uploadBtn: !!uploadBtn,
-            loading: !!loading,
-            results: !!results
-        });
+        // ===== LOG DE DEMARRAGE =====
+        console.log('=== BAIL CHECK v2.1 CHARGE ===');
+        console.log('Upload zone:', !!uploadZone);
+        console.log('File input:', !!fileInput);
+        console.log('Upload btn:', !!uploadBtn);
     </script>
 </body>
 </html>
