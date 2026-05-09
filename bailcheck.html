@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bail Check - Analyse ton bail gratuitement</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bleu-france: #000091;
+            --rouge-france: #E1000F;
+            --vert-ok: #18753C;
+            --orange-warning: #B34000;
+            --gris-fond: #F6F6F6;
+            --gris-texte: #3A3A3A;
+        }
+
+        body {
+            font-family: 'Marianne', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gris-fond);
+            color: var(--gris-texte);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: var(--bleu-france);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--bleu-france);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 2rem;
+        }
+
+        .upload-zone:hover {
+            background: #f0f0ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-zone.dragover {
+            background: #e6e6ff;
+            border-color: var(--rouge-france);
+        }
+
+        .upload-zone .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone h2 {
+            color: var(--bleu-france);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone p {
+            color: #666;
+        }
+
+        #fileInput { display: none; }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .loading.active { display: block; }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #eee;
+            border-top-color: var(--bleu-france);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .results {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .results.active { display: block; }
+
+        .score-card {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .score-card.danger {
+            background: #FEE9E9;
+            border-left: 5px solid var(--rouge-france);
+        }
+
+        .score-card.warning {
+            background: #FFF4E6;
+            border-left: 5px solid var(--orange-warning);
+        }
+
+        .score-card.ok {
+            background: #E8F5E9;
+            border-left: 5px solid var(--vert-ok);
+        }
+
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .score-circle.danger { background: var(--rouge-france); color: white; }
+        .score-circle.warning { background: var(--orange-warning); color: white; }
+        .score-circle.ok { background: var(--vert-ok); color: white; }
+
+        .score-text h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .score-text p {
+            color: #555;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: var(--bleu-france);
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .issue-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .issue-card.critical {
+            background: #FFF0F0;
+            border-left-color: var(--rouge-france);
+        }
+
+        .issue-card.warning {
+            background: #FFF8F0;
+            border-left-color: var(--orange-warning);
+        }
+
+        .issue-card.info {
+            background: #F0F4FF;
+            border-left-color: var(--bleu-france);
+        }
+
+        .issue-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .issue-card p {
+            color: #555;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-card .legal-ref {
+            font-size: 0.85rem;
+            color: #777;
+            font-style: italic;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .action-btn.primary {
+            background: var(--bleu-france);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #0000b3;
+        }
+
+        .letter-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .letter-modal.active {
+            display: flex;
+        }
+
+        .letter-content {
+            background: white;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .letter-content h2 {
+            color: var(--bleu-france);
+            margin-bottom: 1rem;
+        }
+
+        .letter-text {
+            background: #f8f8f8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: Georgia, serif;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            margin: 1rem 0;
+        }
+
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .extracted-text {
+            background: #f8f8f8;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border: 1px solid #ddd;
+        }
+
+        .disclaimer {
+            background: #FFF8E1;
+            border: 1px solid #FFD54F;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .zone-selector {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f0f0ff;
+            border-radius: 8px;
+        }
+
+        .zone-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .zone-selector select {
+            width: 100%;
+            padding: 0.7rem;
+            border: 2px solid var(--bleu-france);
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        @media (max-width: 600px) {
+            .score-card { flex-direction: column; text-align: center; }
+            .header h1 { font-size: 1.6rem; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="header">
+        <h1> Bail Check</h1>
+        <p>Analysez votre bail en 30 secondes. Gratuit. 100% offline.</p>
+    </div>
+
+    <div class="container">
+        <div class="upload-zone" id="uploadZone">
+            <div class="icon">📄</div>
+            <h2>Glissez votre bail ici</h2>
+            <p>PDF, photo (JPG/PNG) ou scan. Vos données restent sur votre appareil.</p>
+            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+
+        <div class="zone-selector" id="zoneSelector" style="display:none;">
+            <label for="zoneType">Type de zone de votre logement :</label>
+            <select id="zoneType">
+                <option value="">-- Sélectionnez --</option>
+                <option value="tendue">Zone tendue (Paris, Lyon, Marseille, Lille, Bordeaux, Montpellier...)</option>
+                <option value="non-tendue">Zone non tendue (reste de la France)</option>
+                <option value="inconnu">Je ne sais pas</option>
+            </select>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <h3>Analyse en cours...</h3>
+            <p id="loadingText">Extraction du texte...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="score-card" id="scoreCard">
+                <div class="score-circle" id="scoreCircle">--</div>
+                <div class="score-text">
+                    <h3 id="scoreTitle">Analyse en cours...</h3>
+                    <p id="scoreDesc">Nous analysons votre bail...</p>
+                </div>
+            </div>
+
+            <div id="issuesContainer"></div>
+
+            <div class="section-title">Texte extrait de votre bail</div>
+            <div class="extracted-text" id="extractedText"></div>
+        </div>
+
+        <div class="disclaimer">
+            <strong>⚠️ Avertissement :</strong> Bail Check est un outil d'aide à la décision, pas un avis juridique. 
+            Pour une assistance personnalisée, contactez l'ADIL de votre département (numéro vert 0806 704 604) ou un juriste.
+        </div>
+    </div>
+
+    <div class="letter-modal" id="letterModal">
+        <div class="letter-content">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <h2>Lettre de recours générée</h2>
+            <div class="letter-text" id="letterText"></div>
+            <button class="action-btn primary" onclick="copyLetter()">📋 Copier la lettre</button>
+            <button class="action-btn primary" onclick="printLetter()">🖨️ Imprimer</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const zoneSelector = document.getElementById('zoneSelector');
+        const zoneType = document.getElementById('zoneType');
+
+        let extractedText = '';
+        let detectedIssues = [];
+
+        // Drag & drop
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        zoneType.addEventListener('change', () => {
+            if (extractedText) analyzeBail(extractedText);
+        });
+
+        async function handleFile(file) {
+            loading.classList.add('active');
+            results.classList.remove('active');
+            zoneSelector.style.display = 'block';
+
+            try {
+                if (file.type === 'application/pdf') {
+                    extractedText = await extractPDF(file);
+                } else {
+                    extractedText = await extractImage(file);
+                }
+
+                document.getElementById('loadingText').textContent = 'Analyse juridique...';
+                analyzeBail(extractedText);
+
+            } catch (err) {
+                alert('Erreur lors de l\'analyse : ' + err.message);
+                loading.classList.remove('active');
+            }
+        }
+
+        async function extractPDF(file) {
+            document.getElementById('loadingText').textContent = 'Lecture du PDF...';
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                document.getElementById('loadingText').textContent = `Lecture page ${i}/${pdf.numPages}...`;
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(item => item.str).join(' ') + '\n';
+            }
+
+            return text;
+        }
+
+        async function extractImage(file) {
+            document.getElementById('loadingText').textContent = 'Reconnaissance du texte (OCR)...';
+            const result = await Tesseract.recognize(file, 'fra', {
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                        document.getElementById('loadingText').textContent = 
+                            `OCR : ${Math.round(m.progress * 100)}%...`;
+                    }
+                }
+            });
+            return result.data.text;
+        }
+
+        function analyzeBail(text) {
+            detectedIssues = [];
+            const lowerText = text.toLowerCase();
+            const zone = zoneType.value;
+
+            // === ANALYSE DES CLAUSES ===
+
+            // 1. Interdiction d'animaux
+            if (lowerText.includes('animal') || lowerText.includes('chien') || lowerText.includes('chat')) {
+                if (lowerText.includes('interdit') || lowerText.includes('interdiction') || lowerText.includes('non autoris')) {
+                    detectedIssues.push({
+                        type: 'critical',
+                        icon: '🐕',
+                        title: 'Interdiction d'animaux détectée',
+                        desc: 'Cette clause est ILLÉGALE sur un bail non meublé (loi n°70-685 du 9 juillet 1970). Vous avez le droit de détenir des animaux domestiques.',
+                        legal: 'Article 10 de la loi n°70-685 du 9 juillet 1970',
+                        letterType: 'animaux'
+                    });
+                }
+            }
+
+            // 2. Charges non justifiées
+            const chargeMatch = text.match(/(charges|provision|provision pour charges)[\s\w]*[:\s]*(\d+)/i);
+            if (chargeMatch) {
+                const montant = parseInt(chargeMatch[2]);
+                if (montant > 100) {
+                    detectedIssues.push({
+                        type: 'warning',
+                        icon: '💰',
+                        title: `Charges élevées : ${montant}€`,
+                        desc: 'Les charges doivent correspondre à des dépenses réelles. Le bailleur doit vous remettre un état détaillé annuel. Si les provisions dépassent de plus de 10% les charges réelles, vous pouvez demander un ajustement.',
+                        legal: 'Article 23 de la loi n°89-462 du 6 juillet 1989 (loi ALUR)',
+                        letterType: 'charges'
+                    });
+                }
+            }
+
+            // 3. Dépôt de garantie
+            const garantieMatch = text.match(/(dépôt de garantie|caution|garantie)[\s\w]*[:\s]*(\d+)/i);
+            const loyerMatch = text.match(/(loyer|montant du loyer|prix)[\s\w]*[:\s]*(\d+)/i);
+            if (garantieMatch && loyerMatch) {
+                const garantie = parseInt(garantieMatch[2]);
+                const loyer = parseInt(loyerMatch[2]);
+                if (garantie > loyer * 1.1) {
+                    detectedIssues.push({
+                        type: 'critical',
+                        icon: '🏦',
+                        title: `Dépôt de garantie excessif : ${garantie}€`,
+                        desc: `Le dépôt de garantie ne peut excéder 1 mois de loyer hors charges pour un bail non meublé. Votre loyer semble être d'environ ${loyer}€.`,
+                        legal: 'Article 22 de la loi n°89-462 du 6 juillet 1989',
+                        letterType: 'garantie'
+                    });
+                }
+            }
+
+            // 4. Loyer encadré (zone tendue)
+            if (zone === 'tendue') {
+                if (lowerText.includes('zone tendue') || lowerText.includes('encadrement')) {
+                    // OK, mentionné
+                } else if (loyerMatch) {
+                    detectedIssues.push({
+                        type: 'info',
+                        icon: '📊',
+                        title: 'Vérification du loyer encadré',
+                        desc: 'Vous êtes en zone tendue. Le loyer de référence est fixé par la préfecture. Vérifiez sur le site encadrementdesloyers.gouv.fr si votre loyer respecte le plafond.',
+                        legal: 'Décret n°2019-773 du 24 juillet 2019',
+                        letterType: null
+                    });
+                }
+            }
+
+            // 5. Travaux à charge du locataire
+            if (lowerText.includes('travaux') && (lowerText.includes('locataire') || lowerText.includes('preneur'))) {
+                if (lowerText.includes('gros') || lowerText.includes('structure') || lowerText.includes('toiture') || lowerText.includes('façade')) {
+                    detectedIssues.push({
+                        type: 'critical',
+                        icon: '🔨',
+                        title: 'Travaux à votre charge détectés',
+                        desc: 'Les gros travaux (toiture, façade, structure, plomberie principale) sont à la charge du bailleur. Seuls les petites réparations locatives vous incombent.',
+                        legal: 'Article 606 du Code civil, Article 7 de la loi n°89-462',
+                        letterType: 'travaux'
+                    });
+                }
+            }
+
+            // 6. Préavis
+            if (lowerText.includes('préavis')) {
+                if (zone === 'tendue' && lowerText.includes('3 mois') && !lowerText.includes('1 mois')) {
+                    detectedIssues.push({
+                        type: 'critical',
+                        icon: '📅',
+                        title: 'Préavis de 3 mois en zone tendue',
+                        desc: 'En zone tendue, le préavis de départ est réduit à 1 mois (au lieu de 3). Cette clause est illégale si elle impose 3 mois.',
+                        legal: 'Article 15 de la loi n°89-462 modifié par la loi ALUR',
+                        letterType: 'preavis'
+                    });
+                }
+            }
+
+            // 7. Clause de solidarité (colocation)
+            if (lowerText.includes('solidarité') && lowerText.includes('coloc')) {
+                detectedIssues.push({
+                    type: 'warning',
+                    icon: '👥',
+                    title: 'Clause de solidarité',
+                    desc: 'Si vous êtes en colocation, la clause de solidarité vous rend responsable du loyer entier si votre colocataire ne paie pas. Demandez une clause de non-solidarité.',
+                    legal: 'Article 8 de la loi n°89-462',
+                    letterType: 'solidarite'
+                });
+            }
+
+            // 8. Assurance habitation obligatoire
+            if (lowerText.includes('assurance') && lowerText.includes('obligatoire')) {
+                detectedIssues.push({
+                    type: 'info',
+                    icon: '🛡️',
+                    title: 'Assurance obligatoire',
+                    desc: 'L'assurance habitation est bien obligatoire, mais vous avez le droit de choisir votre assureur. Le bailleur ne peut pas vous imposer un assureur particulier.',
+                    legal: 'Article 7 de la loi n°89-462',
+                    letterType: null
+                });
+            }
+
+            // 9. Indexation du loyer
+            if (lowerText.includes('indexation') || lowerText.includes('révision') || lowerText.includes('irl')) {
+                detectedIssues.push({
+                    type: 'info',
+                    icon: '📈',
+                    title: 'Indexation du loyer (IRL)',
+                    desc: 'La révision annuelle doit suivre l'Indice de Référence des Loyers (IRL). Vérifiez que l'index utilisé est bien celui de l'INSEE et que la date de révision est correcte.',
+                    legal: 'Article 17 de la loi n°89-462',
+                    letterType: null
+                });
+            }
+
+            // 10. Taxe d'habitation
+            if (lowerText.includes('taxe d'habitation') || lowerText.includes('taxe habitation')) {
+                detectedIssues.push({
+                    type: 'info',
+                    icon: '🏛️',
+                    title: 'Taxe d'habitation',
+                    desc: 'La taxe d'habitation est abolie pour les résidences principales depuis 2023. Si votre bail la mentionne encore, c'est une clause obsolète.',
+                    legal: 'Loi de finances pour 2023',
+                    letterType: null
+                });
+            }
+
+            // 11. Décence (mention manquante)
+            if (!lowerText.includes('décence') && !lowerText.includes('décent')) {
+                detectedIssues.push({
+                    type: 'warning',
+                    icon: '🏠',
+                    title: 'Absence de mention de décence',
+                    desc: 'Le bail doit mentionner que le logement est décent (conforme aux critères de la loi). Si ce n'est pas précisé, demandez une attestation écrite.',
+                    legal: 'Article 6 de la loi n°89-462, Décret n°2002-120',
+                    letterType: 'decence'
+                });
+            }
+
+            // === AFFICHAGE RÉSULTATS ===
+
+            loading.classList.remove('active');
+            results.classList.add('active');
+
+            // Score
+            const criticalCount = detectedIssues.filter(i => i.type === 'critical').length;
+            const warningCount = detectedIssues.filter(i => i.type === 'warning').length;
+
+            const scoreCard = document.getElementById('scoreCard');
+            const scoreCircle = document.getElementById('scoreCircle');
+            const scoreTitle = document.getElementById('scoreTitle');
+            const scoreDesc = document.getElementById('scoreDesc');
+
+            if (criticalCount > 0) {
+                scoreCard.className = 'score-card danger';
+                scoreCircle.className = 'score-circle danger';
+                scoreCircle.textContent = '!';
+                scoreTitle.textContent = `${criticalCount} problème(s) critique(s) détecté(s)`;
+                scoreDesc.textContent = 'Des clauses illégales ou dangereuses ont été identifiées. Agissez rapidement.';
+            } else if (warningCount > 0) {
+                scoreCard.className = 'score-card warning';
+                scoreCircle.className = 'score-circle warning';
+                scoreCircle.textContent = '?';
+                scoreTitle.textContent = `${warningCount} point(s) d'attention`;
+                scoreDesc.textContent = 'Votre bail présente des clauses à vérifier ou à négocier.';
+            } else {
+                scoreCard.className = 'score-card ok';
+                scoreCircle.className = 'score-circle ok';
+                scoreCircle.textContent = '✓';
+                scoreTitle.textContent = 'Bail conforme';
+                scoreDesc.textContent = 'Aucun problème majeur détecté. Vérifiez tout de même les points d'information ci-dessous.';
+            }
+
+            // Issues
+            const container = document.getElementById('issuesContainer');
+            container.innerHTML = '';
+
+            if (detectedIssues.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#666;padding:2rem;">Aucun problème détecté dans les clauses analysées.</p>';
+            } else {
+                detectedIssues.forEach(issue => {
+                    const card = document.createElement('div');
+                    card.className = `issue-card ${issue.type}`;
+                    card.innerHTML = `
+                        <h4>${issue.icon} ${issue.title}</h4>
+                        <p>${issue.desc}</p>
+                        <p class="legal-ref">📚 ${issue.legal}</p>
+                        ${issue.letterType ? `<button class="action-btn primary" onclick="generateLetter('${issue.letterType}', '${issue.title.replace(/'/g, "\'")}')">✉️ Générer une lettre de recours</button>` : ''}
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            // Texte extrait
+            document.getElementById('extractedText').textContent = text.substring(0, 3000) + (text.length > 3000 ? '...' : '');
+        }
+
+        function generateLetter(type, issueTitle) {
+            const modal = document.getElementById('letterModal');
+            const letterText = document.getElementById('letterText');
+
+            const today = new Date().toLocaleDateString('fr-FR');
+
+            const letters = {
+                animaux: `[Votre nom et adresse]
+
+À l'attention du bailleur
+[Adresse du bailleur]
+
+Le ${today}
+
+Objet : Contestation de la clause d'interdiction d'animaux domestiques
+
+Madame, Monsieur,
+
+Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+
+Je constate que ce bail contient une clause interdisant la détention d'animaux domestiques.
+
+Or, conformément à l'article 10 de la loi n°70-685 du 9 juillet 1970, le locataire d'un logement loué non meublé ou d'un logement loué meublé autre qu'un logement de tourisme a le droit de détenir un ou plusieurs animaux domestiques.
+
+Cette clause est donc illégale et non écrite.
+
+Par la présente, je vous informe que j'exerce mon droit de détenir des animaux domestiques dans mon logement, dans le respect des règles de copropriété et de voisinage.
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Signature]`,
+
+                charges: `[Votre nom et adresse]
+
+À l'attention du bailleur
+[Adresse du bailleur]
+
+Le ${today}
+
+Objet : Demande de régularisation des provisions pour charges
+
+Madame, Monsieur,
+
+Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+
+Aux termes de ce bail, je verse des provisions pour charges d'un montant de [montant]€.
+
+Conformément à l'article 23 de la loi n°89-462 du 6 juillet 1989 (loi ALUR), les provisions pour charges doivent correspondre au montant prévisionnel des dépenses récupérables et faire l'objet d'une régularisation annuelle sur présentation d'un état détaillé.
+
+À ce jour, je n'ai pas reçu l'état détaillé des charges pour l'année [année].
+
+Je vous demande donc de bien vouloir me communiquer dans les meilleurs délais :
+1. L'état détaillé des charges de l'année écoulée
+2. La régularisation correspondante (remboursement ou complément)
+3. Le montant justifié des nouvelles provisions pour l'année à venir
+
+À défaut de réponse dans un délai de 2 mois, je me verrai dans l'obligation de saisir la commission départementale de conciliation ou le juge des contentieux de la protection.
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Signature]`,
+
+                garantie: `[Votre nom et adresse]
+
+À l'attention du bailleur
+[Adresse du bailleur]
+
+Le ${today}
+
+Objet : Demande de remboursement du dépôt de garantie excessif
+
+Madame, Monsieur,
+
+Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+
+Aux termes de ce bail, vous exigez un dépôt de garantie d'un montant de [montant]€.
+
+Or, conformément à l'article 22 de la loi n°89-462 du 6 juillet 1989, le dépôt de garantie pour un bail non meublé ne peut excéder un mois de loyer hors charges.
+
+Le loyer mensuel hors charges étant de [loyer]€, le dépôt de garantie ne peut excéder [loyer]€.
+
+Je vous demande donc de bien vouloir me rembourser la somme excédentaire de [montant - loyer]€ dans un délai de 1 mois.
+
+À défaut, je me verrai dans l'obligation de saisir le juge des contentieux de la protection.
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Signature]`,
+
+                travaux: `[Votre nom et adresse]
+
+À l'attention du bailleur
+[Adresse du bailleur]
+
+Le ${today}
+
+Objet : Contestation de la prise en charge de gros travaux
+
+Madame, Monsieur,
+
+Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+
+Aux termes de ce bail, vous me demandez de prendre en charge des travaux de [nature des travaux].
+
+Or, conformément à l'article 606 du Code civil et à l'article 7 de la loi n°89-462 du 6 juillet 1989, les grosses réparations, not celles portant sur la toiture, les façades, la structure, la plomberie principale et l'installation électrique générale, sont à la charge du bailleur.
+
+Seules les petites réparations locatives (entretien courant, remplacement des joints, etc.) incombent au locataire.
+
+Les travaux mentionnés dans le bail relèvent des grosses réparations et sont donc à votre charge.
+
+Je vous demande de bien vouloir procéder à ces travaux dans les meilleurs délais, conformément à vos obligations légales.
+
+À défaut, je me verrai dans l'obligation de saisir le juge des contentieux de la protection.
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Signature]`,
+
+                preavis: `[Votre nom et adresse]
+
+À l'attention du bailleur
+[Adresse du bailleur]
+
+Le ${today}
+
+Objet : Réduction du préavis de départ en zone tendue
+
+Madame, Monsieur,
+
+Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement], situé en zone tendue.
+
+Aux termes de ce bail, vous prévoyez un préavis de départ de 3 mois.
+
+Or, conformément à l'article 15 de la loi n°89-462 du 6 juillet 1989 modifié par la loi ALUR, le préavis de départ du locataire est réduit à 1 mois dans les zones tendues.
+
+Cette clause est donc illégale et non écrite.
+
+Je vous informe que je quitterai les lieux le [date de départ], soit 1 mois après la notification de mon préavis.
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Signature]`,
+
+                solidarite: `[Votre nom et adresse]
+
+À l'attention du bailleur
+[Adresse du bailleur]
+
+Le ${today}
+
+Objet : Demande de suppression de la clause de solidarité
+
+Madame, Monsieur,
+
+Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+
+Aux termes de ce bail, une clause de solidarité nous rend solidaires avec [nom du colocataire] pour le paiement du loyer et des charges.
+
+Or, conformément à l'article 8 de la loi n°89-462 du 6 juillet 1989, les colocataires peuvent demander au bailleur de supprimer la clause de solidarité, chacun n'étant alors redevable que de sa part de loyer et de charges.
+
+Je vous demande donc de bien vouloir modifier le bail en supprimant la clause de solidarité à mon égard.
+
+Je reste évidemment redevable de ma part de loyer et de charges, soit [montant]€.
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Signature]`,
+
+                decence: `[Votre nom et adresse]
+
+À l'attention du bailleur
+[Adresse du bailleur]
+
+Le ${today}
+
+Objet : Demande d'attestation de décence du logement
+
+Madame, Monsieur,
+
+Par courrier en date du [date du bail], vous m'avez notifié un bail pour le logement sis [adresse du logement].
+
+Je constate que ce bail ne mentionne pas expressément que le logement est décent au sens de l'article 6 de la loi n°89-462 du 6 juillet 1989 et du décret n°2002-120 du 30 janvier 2002.
+
+Conformément à ces textes, le logement doit notamment :
+- Disposer d'une fenêtre ou d'une porte vitrée
+- Disposer d'une installation d'eau potable et d'évacuation des eaux usées
+- Disposer d'un chauffage et d'une installation électrique conformes
+- Ne pas présenter de risques manifestes pour la sécurité ou la santé
+
+Je vous demande de bien vouloir me remettre une attestation écrite certifiant que le logement répond à ces critères de décence.
+
+À défaut, je me verrai dans l'obligation de saisir le juge des contentieux de la protection pour obtenir la résiliation du bail ou une réduction de loyer.
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Signature]`
+            };
+
+            letterText.textContent = letters[type] || 'Lettre non disponible pour ce type de problème.';
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('letterModal').classList.remove('active');
+        }
+
+        function copyLetter() {
+            const text = document.getElementById('letterText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Lettre copiée dans le presse-papiers !');
+            });
+        }
+
+        function printLetter() {
+            const text = document.getElementById('letterText').textContent;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head><title>Lettre de recours</title></head>
+                <body style="font-family: Georgia, serif; padding: 40px; line-height: 1.8; white-space: pre-wrap;">
+                    ${text.replace(/\n/g, '<br>')}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Fermer modal en cliquant à l'extérieur
+        document.getElementById('letterModal').addEventListener('click', (e) => {
+            if (e.target.id === 'letterModal') closeModal();
+        });
+    </script>
+</body>
+</html>
